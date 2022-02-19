@@ -1,6 +1,10 @@
 from bs4 import BeautifulSoup
 import requests
 import datetime
+import geocoder
+import folium as fo
+import branca
+import webbrowser
 
 class Forecast:
 	def __init__(self, resort, day, date, tmin_m, tmax_m, snowcm_m, tmin_v, tmax_v, snowcm_v, rrp, rrr, sun, snowl, wind):
@@ -85,6 +89,26 @@ def display_full_forecast(resort, day_array):
 def get_sun_raw(fc):
 	return(fc.sun.strip('h'))
 
+def set_marker_color(sun_h):
+	if(sun_h=='8' or sun_h=='9' or sun_h=='10' or sun_h=='11' or sun_h=='12' or sun_h=='13'):
+		return '#FF0000'
+	elif(sun_h=='7'):
+		return '#FF6800'
+	elif(sun_h=='6'):
+		return '#FFA200'
+	elif(sun_h=='5'):
+		return '#FFE800'
+	elif(sun_h=='4'):
+		return '#FFF380'
+	elif(sun_h=='3'):
+		return '#FFFF9C'    
+	elif(sun_h=='2'):
+		return 'white'
+	elif(sun_h=='1'):
+		return 'lightgray'
+	else:
+		return '737373'
+
 
 
 ## Initialization
@@ -120,18 +144,79 @@ for resort in resorts:
 # sort resort-forecasts by sun hours
 forecasts.sort(key=get_sun_raw, reverse=True)
 
+
+#geolocator = Nominatim(user_agent="where2ski")
+#location = geolocator.geocode('silvretta-arena-ischgl-samnaun')
+#print(location.latitude, location.longitude)
+
+map = fo.Map(location=[47.344872, 11.708090], zoom_start=8, tiles='Stamen Terrain')
+features = fo.FeatureGroup(name="Ski resorts")
+
+
+
+
 print("------------------------------------------------------")
 print("For", ((datetime.datetime.today()+datetime.timedelta(days=int(day))).strftime("%B %d, %Y")), "you can expect the following amount of sun hours for each of the resorts:")
 for index, item in enumerate(forecasts):
 	print("%i)	" %(index+1), get_sun_raw(item), "h in", item.resort)
 	#print (int(f.sun.strip('h')))
+	# grab lat lon coordinates for each resort
+	geo = geocoder.bing(item.resort, key='AiBtv_RVjBnrJ0M9vSNvJXG-W9YGF9GsESjTaa7QY4-bHXMb8vB7xL8T7O3eEcNM')
+	#print(geo.json['lat'], g.json['lng'])
+
+
+	#html_link=fo.Html('<a target="blank" href=https://www.bergfex.at/' + item.resort + '/wetter/prognose/>' + geo.json['address'] + '</a>', script=True)
+	html_link='<a target="blank" href=https://www.bergfex.at/' + item.resort + '/wetter/prognose/>' + geo.json['address'] + '</a>'
+	html=f"""
+	<strong>{html_link}</strong>
+	<br><br>
+	<b>{item.date}</b>
+	<br><br>
+	Mountain:	min {item.tmin_m},	max {item.tmax_m},	snow {item.snowcm_m}
+	<br>
+	Valley:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;min {item.tmin_v},	max {item.tmax_v},	snow {item.snowcm_v}
+	<br><br>
+	<table>
+		<tr>
+			<td>Humidity:</td>
+			<td>{item.rrp}</td>
+		</tr>
+		<tr>
+			<td>Precipitation:</td>
+			<td>{item.rrr}</td>
+		</tr>
+		<tr>
+			<td>Sun-hours:</td>
+			<td>{item.sun}</td>
+			
+		</tr>
+		<tr>
+			<td>Snowline:</td>
+			<td>{item.snowl}</td>
+			
+		</tr>
+		<tr>
+			<td>Wind:</td>
+			<td>{item.wind}</td>
+		</tr>
+	</table>
+	"""
+	iframe = branca.element.IFrame(html=html, width=500, height=300)
+	popup = fo.Popup(iframe, max_width=2650)
+	# add resorts to map
+	features.add_child(fo.Marker(location=[geo.json['lat'],geo.json['lng']],popup=popup,icon=fo.Icon(color='gray',icon_color=set_marker_color(get_sun_raw(item)),icon='circle', prefix='fa')))
+map.add_child(features)
+map.save('map_result.html')
 print("------------------------------------------------------")
 
-option = int(input("Please select a resort number to view more detailed information. Press 0 to quit: "))
+option = int(input("Please select a resort number to view more detailed information.\nEnter 99 to open map.\nPress 0 to quit.\nPlease enter your choice: "))
 while option != 0:
 	if option > 0 and option <= len(forecasts):
 		print("Showing detailed weather of", forecasts[option-1].resort)
 		display_day_forecast(forecasts[option-1])
+		option = int(input("Select other resort, open map (99) or press 0 to quit: "))
+	elif option == 99:
+		webbrowser.open_new_tab('map_result.html')
 		option = int(input("Select other resort or press 0 to quit: "))
 	else:
 		option = int(input("Invalid option. Please select again: "))
