@@ -1,6 +1,7 @@
-### where2ski
+# where2ski
 
-A little program to help you maximize your tan while skiing. Developed and tested with Python 3.6.9 under Ubuntu 18.04.
+A little program to help you maximize your tan while skiing. 
+Based on forecast data from Bergfex. Developed and tested with Python 3.6.9 under Ubuntu 18.04.
 
 ## Initial setup
 
@@ -26,7 +27,7 @@ sudo apt install python3-venv
 
 Switch to the directory where you would like to store your Python 3 virtual environments. Within the directory run the following command to create your new virtual environment:
 
-```
+```sh
 python3 -m venv where2ski-env
 ```
 
@@ -48,7 +49,7 @@ Now that the virtual environment is activated, we can start installing, upgradin
 pip install -r requirements.txt
 ```
 
-* Execute program.
+## Execute program
 
 ```sh
 python3 where2ski.py
