@@ -15,11 +15,11 @@ Based on forecast data from Bergfex. Developed and tested with Python 3.6.9 unde
 git clone https://github.com/cczapka/where2ski.git
 ```
 
-To have the map functionality, please clone the 'map'branch
+To get an older version (e.g. without the map functionality), please clone an older tag such as
 
 ```sh
 
-git clone --branch map https://github.com/cczapka/where2ski.git
+git clone --branch v1 https://github.com/cczapka/where2ski.git
 ```
 
 ### (Optional) Create a virtual env
