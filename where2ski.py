@@ -87,24 +87,24 @@ def display_full_forecast(resort, day_array):
 		display_day_forecast(get_forecast(resort, day))
 
 def get_sun_raw(fc):
-	return(fc.sun.strip('h'))
+	return(int(fc.sun.strip('h')))
 
 def set_marker_color(sun_h):
-	if(sun_h=='8' or sun_h=='9' or sun_h=='10' or sun_h=='11' or sun_h=='12' or sun_h=='13'):
+	if(sun_h==8 or sun_h==9 or sun_h==10 or sun_h==11 or sun_h==12 or sun_h==13):
 		return '#FF0000'
-	elif(sun_h=='7'):
+	elif(sun_h==7):
 		return '#FF6800'
-	elif(sun_h=='6'):
+	elif(sun_h==6):
 		return '#FFA200'
-	elif(sun_h=='5'):
+	elif(sun_h==5):
 		return '#FFE800'
-	elif(sun_h=='4'):
+	elif(sun_h==4):
 		return '#FFF380'
-	elif(sun_h=='3'):
+	elif(sun_h==3):
 		return '#FFFF9C'    
-	elif(sun_h=='2'):
+	elif(sun_h==2):
 		return 'white'
-	elif(sun_h=='1'):
+	elif(sun_h==1):
 		return 'lightgray'
 	else:
 		return '737373'
@@ -135,7 +135,7 @@ while day not in day_array:
 # get weather data for each resort
 print("\nGrabbing latest forecasts data...")
 for resort in resorts:
-	forecasts.append(get_forecast(resort, 7))
+	forecasts.append(get_forecast(resort, day))
 
 # only for debug
 #for f in forecasts:
@@ -143,6 +143,7 @@ for resort in resorts:
 
 # sort resort-forecasts by sun hours
 forecasts.sort(key=get_sun_raw, reverse=True)
+
 
 
 #geolocator = Nominatim(user_agent="where2ski")
