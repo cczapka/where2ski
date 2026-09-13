@@ -5,24 +5,27 @@ STATIONS_URL = "https://static.avalanche.report/eaws_weather_stations/linea.geoj
 MICRO_REGIONS_URL = "https://regions.avalanches.org/micro-regions/{region}_micro-regions.geojson.json"
 HOLIDAYS_BASE = "https://openholidaysapi.org"
 
-# Candidate bulletin URLs per warning region, tried in order. The EUREGIO
-# bulletin (Tyrol) is CAAML v6 JSON; Bavaria and Salzburg come through the
-# EAWS aggregation on the same host. Patterns for the latter are best effort
-# and are logged when they fail so they can be corrected after a live run.
-BULLETIN_CANDIDATES = {
+# Bulletin sources per warning region, tried in order. "caaml" files are
+# CAAML v6 JSON (EUREGIO: Tyrol, South Tyrol, Trentino). "ratings" is the EAWS
+# aggregation file for all of Europe ({"maxDangerRatings": {"DE-BY-10": 2, "DE-BY-10:pm": 3, ...}}).
+# "dated" entries contain the date in the URL and are valid for that date only;
+# undated ones are validated against their own validTime after download.
+BULLETIN_SOURCES = {
     "AT-07": [
-        "https://static.avalanche.report/bulletins/{date}/{date}_EUREGIO_de_CAAMLv6.json",
-        "https://static.avalanche.report/bulletins/latest/EUREGIO_de_CAAMLv6.json",
+        {"url": "https://static.avalanche.report/bulletins/{date}/{date}_EUREGIO_de_CAAMLv6.json", "kind": "caaml", "dated": True},
+        {"url": "https://static.avalanche.report/bulletins/latest/EUREGIO_de_CAAMLv6.json", "kind": "caaml", "dated": False},
     ],
     "DE-BY": [
-        "https://static.avalanche.report/eaws_bulletins/{date}/{date}-DE-BY.json",
-        "https://static.avalanche.report/eaws_bulletins/{date}/{date}DE-BY.ratings.json",
+        {"url": "https://static.avalanche.report/eaws_bulletins/{date}/{date}.ratings.json", "kind": "ratings", "dated": True},
     ],
     "AT-05": [
-        "https://static.avalanche.report/eaws_bulletins/{date}/{date}-AT-05.json",
-        "https://static.avalanche.report/eaws_bulletins/{date}/{date}AT-05.ratings.json",
+        {"url": "https://static.avalanche.report/eaws_bulletins/{date}/{date}.ratings.json", "kind": "ratings", "dated": True},
     ],
 }
+
+# Default season ("MM-DD" open/close) when the registry gives none.
+DEFAULT_SEASON = ("12-01", "04-15")
+GLACIER_SEASON = ("10-01", "05-31")
 
 # OpenHolidays subdivision codes used for the crowd factor.
 HOLIDAY_REGIONS = [("DE", "DE-BY"), ("AT", "AT-7"), ("AT", "AT-5")]

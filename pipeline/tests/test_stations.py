@@ -8,15 +8,18 @@ def test_flatten_nested():
     assert flat == {"a.b": 1, "a.c.0.d": 2}
 
 
-def test_parse_station_tolerant_keys():
+def test_parse_station_converts_si_units():
     st = parse_station_feature(STATIONS_GEOJSON["features"][0])
     assert st.name == "Kühtai Test"
     assert st.elevation == 2050  # from the z coordinate
-    assert st.hs == 112 and st.hn24 == 18 and st.hn72 == 30
-    assert st.t_air == -6.5 and st.t_surface == -9.0 and st.gust == 28
-    assert st.time.startswith("2026-01-15")
+    assert abs(st.hs - 112) < 1e-6 and abs(st.hn24 - 18) < 1e-6 and abs(st.hn72 - 30) < 1e-6
+    assert abs(st.t_air - (-6.5)) < 1e-6 and abs(st.t_surface - (-9.0)) < 1e-6
+    assert abs(st.gust - 28.08) < 1e-6 and abs(st.wind - 10.8) < 1e-6
+    assert st.time.startswith("2026-01-15") and st.micro_region == "AT-07-14"
     st2 = parse_station_feature(STATIONS_GEOJSON["features"][1])
-    assert st2.hs == 60.0 and st2.t_air == -12.0  # numeric strings accepted
+    assert abs(st2.hs - 60.0) < 1e-6 and abs(st2.t_air - (-12.0)) < 1e-6  # numeric strings accepted
+    assert st2.hn24 == 0.0  # settling (negative difference) is not new snow
+    assert st2.elevation == 2950
 
 
 def test_map_stations_filters_distance_and_elevation():
@@ -26,5 +29,5 @@ def test_map_stations_filters_distance_and_elevation():
     mapped = map_stations(resort, stations)
     assert [m.station.name for m in mapped] == ["Kühtai Test"]
     assert abs(sum(m.weight for m in mapped) - 1.0) < 1e-9
-    assert weighted(mapped, "hs") == 112
-    assert weighted(mapped, "wind") is None
+    assert abs(weighted(mapped, "hs") - 112) < 1e-6
+    assert weighted(mapped, "t_surface") is not None

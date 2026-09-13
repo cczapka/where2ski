@@ -56,21 +56,23 @@ STATIONS_GEOJSON = {
     "type": "FeatureCollection",
     "features": [
         {"type": "Feature", "geometry": {"type": "Point", "coordinates": [11.02, 47.21, 2050]},
-         "properties": {"name": "Kühtai Test", "operator": "LWD Tirol",
-                        "measurements": {"HS": 112, "HSD24": 18, "HSD48": 24, "HSD72": 30, "LT": -6.5, "OFT": -9.0, "WG": 28},
-                        "date": "2026-01-15T07:00:00+01:00"}},
+         "properties": {"name": "Kühtai Test", "operator": "LWD Tirol", "microRegionID": "AT-07-14",
+                        "HS": 1.12, "HSD_24": 0.18, "HSD_48": 0.24, "HSD_72": 0.30, "TA": 266.65, "TSS": 264.15,
+                        "VW_MAX": 7.8, "VW": 3.0, "date": "2026-01-15T07:00:00+01:00"}},
         {"type": "Feature", "geometry": {"type": "Point", "coordinates": [11.05, 47.23]},
-         "properties": {"name": "Far Too High", "elevation": 2950, "HS": "60", "LT": "-12"}},
+         "properties": {"name": "Far Too High", "altitude": 2950, "HS": "0.6", "TA": "261.15", "HSD_24": -0.03}},
         {"type": "Feature", "geometry": {"type": "Point", "coordinates": [12.5, 47.5]},
-         "properties": {"name": "Other Valley", "elevation": 1500, "HS": 40, "LT": -2}},
+         "properties": {"name": "Other Valley", "altitude": 1500, "HS": 0.4, "TA": 271.15}},
     ],
 }
+
+RATINGS = {"maxDangerRatings": {"DE-BY-10": 2, "DE-BY-10:pm": 3, "AT-05-03": 1, "DE-BY-11": 0}}
 
 CAAML = {
     "bulletins": [
         {
             "bulletinID": "x",
-            "validTime": {"startTime": "2026-01-15T00:00:00Z", "endTime": "2026-01-16T00:00:00Z"},
+            "validTime": {"startTime": "2026-01-14T16:00:00Z", "endTime": "2026-01-15T16:00:00Z"},
             "regions": [{"regionID": "AT-07-14", "name": "Test region"}],
             "dangerRatings": [
                 {"mainValue": "considerable", "elevation": {"lowerBound": "2200"}, "validTimePeriod": "all_day"},
@@ -130,8 +132,12 @@ def offline_dir(tmp_path):
     (d / "openmeteo_kuehtai.json").write_text(json.dumps(series_to_openmeteo_json(powder)))
     (d / "openmeteo_sudelfeld.json").write_text(json.dumps(series_to_openmeteo_json(warm)))
     (d / "stations.geojson").write_text(json.dumps(STATIONS_GEOJSON))
-    (d / "bulletin_AT-07.json").write_text(json.dumps(CAAML))
+    (d / "bulletin_AT-07_2026-01-15.json").write_text(json.dumps(CAAML))
+    (d / "eaws_ratings_2026-01-15.json").write_text(json.dumps(RATINGS))
     (d / "micro_regions_AT-07.json").write_text(json.dumps(MICRO_REGIONS))
+    (d / "micro_regions_DE-BY.json").write_text(json.dumps({"type": "FeatureCollection", "features": [
+        {"type": "Feature", "properties": {"id": "DE-BY-10"},
+         "geometry": {"type": "Polygon", "coordinates": [[[11.9, 47.6], [12.2, 47.6], [12.2, 47.8], [11.9, 47.8], [11.9, 47.6]]]}}]}))
     for sub in ("DE-BY", "AT-7", "AT-5"):
         (d / f"holidays_{sub}_school.json").write_text(json.dumps(HOLIDAYS_SCHOOL))
         (d / f"holidays_{sub}_public.json").write_text(json.dumps(HOLIDAYS_PUBLIC))

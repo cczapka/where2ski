@@ -21,6 +21,7 @@ class Resort:
     links: dict = field(default_factory=dict)
     micro_region: str | None = None
     aspect_rose: dict | None = None
+    season: dict | None = None
     notes: str | None = None
 
     @property
@@ -49,6 +50,7 @@ class Resort:
             "links": dict(self.links),
             "micro_region": self.micro_region,
             "aspect_rose": self.aspect_rose,
+            "season": self.season,
         }
 
 
@@ -71,6 +73,7 @@ def load_resorts(path: Path) -> list[Resort]:
                 links=item.get("links", {}),
                 micro_region=item.get("micro_region"),
                 aspect_rose=item.get("aspect_rose"),
+                season=item.get("season"),
                 notes=item.get("notes"),
             )
         )

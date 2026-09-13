@@ -113,8 +113,11 @@ def parse_caaml(data: dict, source: str) -> dict[str, RegionBulletin]:
             tendency = t.get("tendencyType")
         valid = None
         vt = b.get("validTime") or {}
-        if isinstance(vt, dict) and vt.get("startTime"):
-            valid = str(vt["startTime"])[:10]
+        if isinstance(vt, dict):
+            # bulletins are published the evening before; the end time falls on the day they are valid for
+            stamp = vt.get("endTime") or vt.get("startTime")
+            if stamp:
+                valid = str(stamp)[:10]
         for region in b.get("regions", []) or []:
             rid = region.get("regionID") or region.get("id")
             if rid:
@@ -123,9 +126,16 @@ def parse_caaml(data: dict, source: str) -> dict[str, RegionBulletin]:
     return out
 
 
-def parse_ratings(data, source: str) -> dict[str, RegionBulletin]:
-    """Best-effort parser for EAWS '.ratings.json' aggregation files."""
+def parse_ratings(data, source: str, valid_date: str | None = None) -> dict[str, RegionBulletin]:
+    """Parse the EAWS aggregation file: {"maxDangerRatings": {"DE-BY-10": 2, "DE-BY-10:pm": 3, ...}}.
+
+    Values are warn-level numbers (0 = no rating). Keys may carry ":am"/":pm"
+    (or other) qualifiers; all ratings of a region are kept and level_at()
+    returns the maximum, which is the conservative choice.
+    """
     out: dict[str, RegionBulletin] = {}
+    if isinstance(data, dict) and isinstance(data.get("maxDangerRatings"), dict):
+        data = data["maxDangerRatings"]
 
     def to_level(v):
         if isinstance(v, bool):
@@ -138,45 +148,60 @@ def parse_ratings(data, source: str) -> dict[str, RegionBulletin]:
             return LEVELS.get(v.lower())
         return None
 
-    items = data.items() if isinstance(data, dict) else []
-    for rid, val in items:
+    grouped: dict[str, list[Rating]] = {}
+    for key, val in (data.items() if isinstance(data, dict) else []):
+        rid, _, qualifier = str(key).partition(":")
         level = to_level(val)
-        ratings = []
-        if level is not None:
-            ratings.append(Rating(level=level))
-        elif isinstance(val, dict):
-            for k, v in val.items():
-                lv = to_level(v)
-                if lv is not None:
-                    ratings.append(Rating(level=lv, period=str(k)))
-                elif isinstance(v, dict):
-                    for kk, vv in v.items():
-                        lv2 = to_level(vv)
-                        if lv2 is not None:
-                            ratings.append(Rating(level=lv2, period=f"{k}/{kk}"))
-        if ratings:
-            out[str(rid)] = RegionBulletin(region_id=str(rid), ratings=ratings, problems=[], tendency=None,
-                                           valid_date=None, source=source)
+        if level is None:
+            continue
+        grouped.setdefault(rid, []).append(Rating(level=level, period=qualifier or "all_day"))
+    for rid, ratings in grouped.items():
+        out[rid] = RegionBulletin(region_id=rid, ratings=ratings, problems=[], tendency=None,
+                                  valid_date=valid_date, source=source)
     return out
 
 
+def _within_a_day(valid_date: str | None, date: str) -> bool:
+    if valid_date is None:
+        return False
+    try:
+        from datetime import date as _d
+        return abs((_d.fromisoformat(valid_date) - _d.fromisoformat(date)).days) <= 1
+    except ValueError:
+        return False
+
+
 def fetch_bulletins(http: Http, region: str, date: str) -> tuple[dict[str, RegionBulletin], dict]:
-    status = {"region": region, "ok": False, "url": None, "error": None, "regions": 0}
-    for template in config.BULLETIN_CANDIDATES.get(region, []):
-        url = template.format(date=date)
+    """Bulletins valid for ``date`` (YYYY-MM-DD) in ``region``; empty dict if none is available."""
+    status = {"region": region, "date": date, "ok": False, "url": None, "error": None, "regions": 0}
+    for src in config.BULLETIN_SOURCES.get(region, []):
+        url = src["url"].format(date=date)
+        kind = src["kind"]
+        key = f"eaws_ratings_{date}.json" if kind == "ratings" else f"bulletin_{region}_{date if src['dated'] else 'latest'}.json"
         try:
-            data = http.get_json(url, key=f"bulletin_{region}.json", ttl_s=1800)
+            data = http.get_json(url, key=key, ttl_s=1800)
         except Exception as exc:  # noqa: BLE001
             status["error"] = f"{url}: {exc}"
             log.warning("bulletin %s failed: %s", url, exc)
             continue
-        parsed = parse_caaml(data, source=url)
-        if not parsed and url.endswith(".ratings.json"):
-            parsed = parse_ratings(data, source=url)
+        if kind == "ratings":
+            parsed = parse_ratings(data, source=url, valid_date=date)
+        else:
+            parsed = parse_caaml(data, source=url)
+            if src["dated"]:
+                for b in parsed.values():
+                    b.valid_date = b.valid_date or date
+            else:
+                stale = {rid: b for rid, b in parsed.items() if not _within_a_day(b.valid_date, date)}
+                if stale:
+                    sample = next(iter(stale.values())).valid_date
+                    log.warning("bulletin %s is stale (valid %s, wanted %s); ignoring", url, sample, date)
+                    status["error"] = f"{url}: stale, valid for {sample}"
+                    parsed = {rid: b for rid, b in parsed.items() if rid not in stale}
         if parsed:
             status.update(ok=True, url=url, error=None, regions=len(parsed))
             return parsed, status
-        status["error"] = f"{url}: no bulletins parsed"
+        status["error"] = status["error"] or f"{url}: no bulletins parsed"
     return {}, status
 
 

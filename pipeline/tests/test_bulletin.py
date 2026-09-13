@@ -1,5 +1,5 @@
 from where2ski_pipeline.sources.bulletin import find_micro_region, parse_caaml, parse_ratings
-from .conftest import CAAML, MICRO_REGIONS
+from .conftest import CAAML, MICRO_REGIONS, RATINGS
 
 
 def test_parse_caaml_levels_by_elevation():
@@ -14,11 +14,12 @@ def test_parse_caaml_levels_by_elevation():
     assert b.problems[0].public()["elevation"] == "above 2200 m"
 
 
-def test_parse_ratings_best_effort():
-    parsed = parse_ratings({"DE-BY-10": 2, "DE-BY-11": {"am": "moderate", "pm": 3}, "junk": "x"}, source="t")
-    assert parsed["DE-BY-10"].level_at(1000) == 2
-    assert parsed["DE-BY-11"].level_at(1000) == 3
-    assert "junk" not in parsed
+def test_parse_ratings_eaws_format():
+    parsed = parse_ratings(RATINGS, source="t", valid_date="2026-01-15")
+    assert parsed["DE-BY-10"].level_at(1000) == 3  # max of all-day 2 and pm 3
+    assert parsed["AT-05-03"].level_at(1000) == 1
+    assert "DE-BY-11" not in parsed  # 0 = no rating
+    assert parsed["DE-BY-10"].valid_date == "2026-01-15"
 
 
 def test_find_micro_region():

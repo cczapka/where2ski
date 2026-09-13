@@ -11,20 +11,26 @@ from ..http import Http
 
 log = logging.getLogger(__name__)
 
-# Candidate property names (lower-case, last path segment) per quantity.
-KEYS = {
-    "name": {"name", "stationname", "station_name", "station", "lwd_name", "title", "label"},
-    "elevation": {"elevation", "ele", "alt", "altitude", "hoehe", "height", "elev", "lwd_hoehe"},
-    "hs": {"hs", "snowheight", "snow_height", "sh", "snowdepth", "snow_depth", "schneehoehe"},
-    "hn24": {"hn24", "hsd24", "hs24", "newsnow24", "ns24", "hn_24", "snow24", "hs_24", "hsdiff24"},
-    "hn48": {"hn48", "hsd48", "hs48", "newsnow48", "ns48", "hn_48", "snow48", "hs_48", "hsdiff48"},
-    "hn72": {"hn72", "hsd72", "hs72", "newsnow72", "ns72", "hn_72", "snow72", "hs_72", "hsdiff72"},
-    "t_air": {"lt", "ta", "t", "temperature", "airtemperature", "air_temperature", "temp", "lufttemperatur", "tl"},
-    "t_surface": {"oft", "tss", "snowsurfacetemperature", "snow_surface_temperature", "surface_temperature", "schneeoberflaechentemperatur"},
-    "gust": {"wg", "gust", "windgust", "wind_gust", "boe", "ff_boe", "wsp_max", "ffx"},
-    "wind": {"ws", "ff", "windspeed", "wind_speed", "wind"},
-    "time": {"date", "time", "timestamp", "datetime", "datum", "obs_time", "measured_at"},
-    "operator": {"operator", "provider", "source", "region", "lwd", "operator_name"},
+# Property names of the EAWS station feed (linea listing schema) with the
+# conversion into the units used here: cm, °C, km/h. Raw values are SI
+# (metres, Kelvin, m/s). Matching is case-insensitive on the last path
+# segment, so nested layouts still work.
+SPEC = {
+    "hs": [("hs", 100.0, 0.0)],
+    "hn24": [("hsd_24", 100.0, 0.0)],
+    "hn48": [("hsd_48", 100.0, 0.0)],
+    "hn72": [("hsd_72", 100.0, 0.0)],
+    "t_air": [("ta", 1.0, -273.15)],
+    "t_surface": [("tss", 1.0, -273.15)],
+    "gust": [("vw_max", 3.6, 0.0)],
+    "wind": [("vw", 3.6, 0.0)],
+    "elevation": [("altitude", 1.0, 0.0), ("elevation", 1.0, 0.0), ("ele", 1.0, 0.0)],
+}
+TEXT_KEYS = {
+    "name": {"name", "stationname", "station_name", "shortname"},
+    "time": {"date", "time", "timestamp", "datetime"},
+    "operator": {"operator", "dataproviderid", "provider"},
+    "micro_region": {"microregionid", "micro_region", "regionid"},
 }
 
 
@@ -44,6 +50,7 @@ class Station:
     wind: float | None = None
     time: str | None = None
     operator: str | None = None
+    micro_region: str | None = None
 
     def public(self) -> dict:
         return {
@@ -60,6 +67,7 @@ class Station:
             "gust": self.gust,
             "time": self.time,
             "operator": self.operator,
+            "micro_region": self.micro_region,
         }
 
 
@@ -97,16 +105,20 @@ def _num(v):
     return None
 
 
-def pick(flat: dict, quantity: str, numeric: bool = True):
-    for path, value in flat.items():
-        last = path.rsplit(".", 1)[-1].lower()
-        if last in KEYS[quantity]:
-            if numeric:
+def pick_number(flat: dict, quantity: str) -> float | None:
+    for key, factor, offset in SPEC[quantity]:
+        for path, value in flat.items():
+            if path.rsplit(".", 1)[-1].lower() == key:
                 n = _num(value)
                 if n is not None:
-                    return n
-            elif value not in (None, ""):
-                return str(value)
+                    return n * factor + offset
+    return None
+
+
+def pick_text(flat: dict, quantity: str) -> str | None:
+    for path, value in flat.items():
+        if path.rsplit(".", 1)[-1].lower() in TEXT_KEYS[quantity] and value not in (None, ""):
+            return str(value)
     return None
 
 
@@ -118,27 +130,32 @@ def parse_station_feature(feature: dict) -> Station | None:
     lon, lat = float(coords[0]), float(coords[1])
     props = feature.get("properties") or {}
     flat = flatten(props)
-    elevation = pick(flat, "elevation")
-    if elevation is None and len(coords) >= 3:
-        elevation = _num(coords[2])
-    name = pick(flat, "name", numeric=False) or feature.get("id") or f"{lat:.3f},{lon:.3f}"
+    elevation = _num(coords[2]) if len(coords) >= 3 else None
+    if elevation is None:
+        elevation = pick_number(flat, "elevation")
+    name = pick_text(flat, "name") or feature.get("id") or f"{lat:.3f},{lon:.3f}"
     st = Station(name=str(name), lat=lat, lon=lon, elevation=elevation)
-    st.hs = pick(flat, "hs")
-    st.hn24 = pick(flat, "hn24")
-    st.hn48 = pick(flat, "hn48")
-    st.hn72 = pick(flat, "hn72")
-    st.t_air = pick(flat, "t_air")
-    st.t_surface = pick(flat, "t_surface")
-    st.gust = pick(flat, "gust")
-    st.wind = pick(flat, "wind")
-    st.time = pick(flat, "time", numeric=False)
-    st.operator = pick(flat, "operator", numeric=False)
-    # plausibility
+    st.hs = pick_number(flat, "hs")
+    st.hn24 = pick_number(flat, "hn24")
+    st.hn48 = pick_number(flat, "hn48")
+    st.hn72 = pick_number(flat, "hn72")
+    st.t_air = pick_number(flat, "t_air")
+    st.t_surface = pick_number(flat, "t_surface")
+    st.gust = pick_number(flat, "gust")
+    st.wind = pick_number(flat, "wind")
+    st.time = pick_text(flat, "time")
+    st.operator = pick_text(flat, "operator")
+    st.micro_region = pick_text(flat, "micro_region")
+    # plausibility: snow height 0..800 cm; negative height differences mean settling, not new snow
     if st.hs is not None and (st.hs < 0 or st.hs > 800):
         st.hs = None
     for attr in ("hn24", "hn48", "hn72"):
         v = getattr(st, attr)
-        if v is not None and (v < 0 or v > 300):
+        if v is not None:
+            setattr(st, attr, None if v > 300 else max(0.0, v))
+    for attr in ("t_air", "t_surface"):
+        v = getattr(st, attr)
+        if v is not None and (v < -60 or v > 50):
             setattr(st, attr, None)
     return st
 
@@ -156,10 +173,12 @@ def load_stations(http: Http) -> tuple[list[Station], dict]:
         if st is not None:
             stations.append(st)
     with_hs = sum(1 for s in stations if s.hs is not None)
+    sample = [s.public() for s in stations if s.hs is not None][:3]
     status = {
         "count": len(stations),
         "with_hs": with_hs,
         "property_keys": sorted(keys_seen)[:80],
+        "sample": sample,
     }
     log.info("stations: %d parsed, %d with snow height; keys: %s", len(stations), with_hs, status["property_keys"])
     return stations, status

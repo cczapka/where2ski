@@ -28,6 +28,8 @@ def test_end_to_end_offline(registry_path, offline_dir, tmp_path):
 
     s = by_id["sudelfeld"]
     assert s["stations"] == []
+    assert s["micro_region"] == "DE-BY-10"
+    assert s["days"][0]["avalanche"]["level_top"] == 3  # from the EAWS ratings file
     t = s["days"][0]
     assert t["snow"]["hs_source"] == "model" and t["snow"]["hs"] == 25
     assert any("thin" in b for b in t["blockers"]["piste"])
@@ -40,3 +42,19 @@ def test_end_to_end_offline(registry_path, offline_dir, tmp_path):
                 assert 0 <= d["scores"][mode] <= 100
             assert 0 < d["confidence"] <= 1
     assert reloaded["status"]["sources"]["holidays"]["ok"] == 6
+    assert reloaded["status"]["sources"]["bulletins"]["AT-07"][0]["ok"] is True
+    assert reloaded["status"]["sources"]["bulletins"]["AT-07"][1]["ok"] is False  # no bulletin for tomorrow
+
+
+def test_season_gate(registry_path, offline_dir, tmp_path):
+    from datetime import date
+    from where2ski_pipeline.registry import Resort
+    from where2ski_pipeline.run import is_open
+
+    r = Resort(id="x", name="x", region="AT-07", lat=0, lon=0, elevation={"base": 1, "mid": 2, "top": 3})
+    assert is_open(r, date(2026, 1, 15)) and not is_open(r, date(2026, 9, 13))
+    g = Resort(id="g", name="g", region="AT-07", lat=0, lon=0, elevation={"base": 1, "mid": 2, "top": 3}, glacier=True)
+    assert is_open(g, date(2026, 10, 5)) and not is_open(g, date(2026, 9, 13))
+    y = Resort(id="y", name="y", region="AT-07", lat=0, lon=0, elevation={"base": 1, "mid": 2, "top": 3},
+               season={"open": "01-01", "close": "12-31"})
+    assert is_open(y, date(2026, 9, 13))

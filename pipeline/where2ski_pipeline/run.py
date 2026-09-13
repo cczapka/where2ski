@@ -22,19 +22,23 @@ from .sources.stations import load_stations, map_stations, weighted
 log = logging.getLogger(__name__)
 
 
+def _md(day: date) -> str:
+    return day.strftime("%m-%d")
+
+
 def is_open(resort: Resort, day: date) -> bool:
-    season = resort.links.get("season") if isinstance(resort.links, dict) else None
-    if not season:
-        return True
-    try:
-        start = date.fromisoformat(season["open"])
-        end = date.fromisoformat(season["close"])
-    except (KeyError, ValueError):
-        return True
-    return start <= day <= end
+    """Season gate from the registry ("MM-DD" open/close, may wrap the year) or sensible defaults."""
+    season = resort.season or {}
+    default = config.GLACIER_SEASON if resort.glacier else config.DEFAULT_SEASON
+    open_md = str(season.get("open") or default[0])[-5:]
+    close_md = str(season.get("close") or default[1])[-5:]
+    today_md = _md(day)
+    if open_md <= close_md:
+        return open_md <= today_md <= close_md
+    return today_md >= open_md or today_md <= close_md
 
 
-def assess_resort(resort: Resort, http: Http, today: date, days: list[date], stations, bulletins_by_region,
+def assess_resort(resort: Resort, http: Http, today: date, days: list[date], stations, bulletins_by_day,
                   micro_features, holidays) -> dict:
     series = fetch_resort_forecast(http, resort)
     base, mid, top = series["base"], series["mid"], series["top"]
@@ -44,7 +48,9 @@ def assess_resort(resort: Resort, http: Http, today: date, days: list[date], sta
     station_hn = {k: weighted(mapped, k) for k in ("hn24", "hn48", "hn72")} if mapped else None
 
     micro = resort.micro_region or find_micro_region(micro_features.get(resort.region, []), resort.lat, resort.lon)
-    bulletin = bulletins_by_region.get(resort.region, {}).get(micro) if micro else None
+    if micro is None and mapped:
+        micro = next((m.station.micro_region for m in mapped if m.station.micro_region), None)
+    has_bulletin = False
 
     out_days = []
     for lead, day in enumerate(days):
@@ -52,7 +58,14 @@ def assess_resort(resort: Resort, http: Http, today: date, days: list[date], sta
         weather = day_weather(base, mid, top, day)
         level_mid = level_top = None
         avalanche = None
-        if bulletin is not None and lead <= 1:
+        bulletin = None
+        if micro and lead <= 1:
+            for_day = bulletins_by_day.get(resort.region, {}).get(day.isoformat()) or {}
+            bulletin = for_day.get(micro)
+            if bulletin is None and lead == 1:
+                bulletin = (bulletins_by_day.get(resort.region, {}).get(today.isoformat()) or {}).get(micro)
+        if bulletin is not None:
+            has_bulletin = True
             level_mid = bulletin.level_at(resort.mid)
             level_top = bulletin.level_at(resort.top)
             avalanche = {
@@ -76,7 +89,7 @@ def assess_resort(resort: Resort, http: Http, today: date, days: list[date], sta
             "scores": scores,
             "blockers": blk,
             "factors": factors,
-            "confidence": scoring.confidence(lead, bool(mapped), bulletin is not None),
+            "confidence": scoring.confidence(lead, bool(mapped), has_bulletin),
             "badges": scoring.badges(snow, weather),
             "snow": snow.public(),
             "weather": weather.public(),
@@ -111,13 +124,16 @@ def run(registry: Path, out_dir: Path, cache_dir: Path | None = None, offline_di
     status["sources"]["stations"] = st_status
 
     regions = sorted({r.region for r in resorts})
-    bulletins_by_region = {}
+    bulletins_by_day: dict = {}
     micro_features = {}
     status["sources"]["bulletins"] = {}
     for region in regions:
-        parsed, b_status = fetch_bulletins(http, region, today.isoformat())
-        bulletins_by_region[region] = parsed
-        status["sources"]["bulletins"][region] = b_status
+        bulletins_by_day[region] = {}
+        status["sources"]["bulletins"][region] = []
+        for day in days[:2]:
+            parsed, b_status = fetch_bulletins(http, region, day.isoformat())
+            bulletins_by_day[region][day.isoformat()] = parsed
+            status["sources"]["bulletins"][region].append(b_status)
         micro_features[region] = fetch_micro_regions(http, region)
         status["sources"].setdefault("micro_regions", {})[region] = len(micro_features[region])
 
@@ -127,7 +143,7 @@ def run(registry: Path, out_dir: Path, cache_dir: Path | None = None, offline_di
     results = []
     for resort in resorts:
         try:
-            results.append(assess_resort(resort, http, today, days, stations, bulletins_by_region, micro_features, holidays))
+            results.append(assess_resort(resort, http, today, days, stations, bulletins_by_day, micro_features, holidays))
         except Exception as exc:  # noqa: BLE001
             log.error("resort %s failed: %s\n%s", resort.id, exc, traceback.format_exc())
             item = resort.public()

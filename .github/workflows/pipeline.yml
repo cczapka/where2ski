@@ -56,7 +56,11 @@ jobs:
           import json
           d = json.load(open("out/latest.json"))
           print("generated", d["generated_at"], "today", d["today"])
-          print("sources", json.dumps(d["status"]["sources"], indent=1)[:3000])
+          print("sources", json.dumps(d["status"]["sources"], indent=1)[:4000])
+          for r in d["resorts"][:41]:
+              for st in r.get("stations", [])[:1]:
+                  print(f"station sample {r['id']:22} {st['name'][:28]:28} {st.get('elevation')} m  hs {st.get('hs')} hn24 {st.get('hn24')} "
+                        f"t {st.get('t_air')} tss {st.get('t_surface')} gust {st.get('gust')} at {st.get('time')}")
           for r in sorted(d["resorts"], key=lambda x: -(x["days"][0]["scores"]["freeride"] if x["days"] else 0))[:15]:
               t = r["days"][0] if r["days"] else None
               if t:
@@ -71,6 +75,7 @@ jobs:
         if: github.event_name != 'pull_request'
         run: |
           day=$(python -c "import json;print(json.load(open('out/snapshot.json'))['date'])")
+          mkdir -p data/snapshots
           f="data/snapshots/${day}.json"
           if [ -f "$f" ]; then
             echo "snapshot for ${day} already stored"
