@@ -132,13 +132,17 @@ Keep only as a link-out from the resort page.
 ### 3.2 Station observations (snow height, temperature, wind, radiation)
 
 **lawinen.report / avalanche.report station feed** ✅ — this is the feed the
-"Wetterstationen" page uses. It aggregates EAWS partner stations (Tyrol,
-South Tyrol, Trentino, Carinthia and others).
+"Wetterstationen" page uses. It aggregates EAWS partner stations; the first
+live run saw about 1 700 stations, roughly 660 of them with a snow-height
+sensor.
 - Current: `https://static.avalanche.report/eaws_weather_stations/linea.geojson`
 - Snapshots: `https://static.avalanche.report/eaws_weather_stations/{date}/{dateTime}_linea.geojson`
-- Properties per station (to confirm on first fetch): snow height, 24/48/72 h
-  differences, air temperature, snow-surface temperature, wind speed/direction,
-  elevation, operator, timestamp.
+- Properties (verified, SI units): `HS` snow height in m, `HSD_6/24/48/72`
+  snow-height differences in m, `TA`/`TA_MIN`/`TA_MAX` air temperature in K,
+  `TSS` snow-surface temperature in K, `TD` dew point, `VW`/`VW_MAX` wind and
+  gust in m/s, `DW` wind direction, `PSUM_*` precipitation in mm, `RH`, `ISWR`/
+  `RSWR` radiation, plus `name`, `altitude`, `operator`, `microRegionID`,
+  `date`. The schema lives in the `@albina-euregio/linea` package.
 - Open data page: `https://lawinen.report/more/open-data`.
 
 **Land Tirol OGD station CSVs** ✅ — the underlying Tyrolean data, per station
@@ -184,7 +188,10 @@ with aspects/elevations, tendency, text).
 
 **EAWS ratings for all of Europe** ✅ — includes Bavaria (`DE-BY`) and
 Salzburg (`AT-05`):
-`https://static.avalanche.report/eaws_bulletins/{date}/{date}{region}.ratings.json`.
+`https://static.avalanche.report/eaws_bulletins/{date}/{date}.ratings.json`,
+a JSON object `{"maxDangerRatings": {"DE-BY-10": 2, "DE-BY-10:pm": 3, ...}}`
+with warn-level numbers (0 = no rating) per micro-region, optionally split
+into `:am`/`:pm`. Only exists for dates with a published bulletin.
 
 **Micro-region polygons** ✅ — `https://regions.avalanches.org/` (eaws-regions,
 GeoJSON). Used once to map each resort to its micro-region id(s).
@@ -425,12 +432,19 @@ ever reads static JSON.
 
 ## 9. Roadmap
 
-**Phase 1 – replace scraping, ship a usable ranking (2–3 weekends)**
-- Registry for ~40 resorts with elevations, passes, travel time, links.
-- Pipeline: Open-Meteo at 3 elevations, station feed mapping, base-depth and
-  fresh-snow calculation, piste/freeride scores without the full quality
-  model, JSON publishing.
-- Android: list, matrix, map, detail page, settings.
+**Phase 1 – replace scraping, ship a usable ranking** (implemented)
+- Registry of 41 major resorts with elevations, passes, travel time, links,
+  optional season dates.
+- Pipeline: Open-Meteo at 3 elevations, EAWS station feed mapping with unit
+  conversion, EUREGIO CAAML and EAWS ratings bulletins with micro-region
+  lookup, holiday crowd factor, first version of the snow-state heuristics,
+  two-mode scoring with blockers, badges and confidence, JSON + status page,
+  GitHub Actions cron with Pages publishing and daily station snapshots.
+- Android: ranking, day matrix, map, detail page, settings with weight
+  sliders, pass filter and travel limit; APK built by CI.
+- Known gaps: aspect roses are not yet in the registry (uniform aspect
+  factor), resort coordinates and elevations are approximate, Bavarian and
+  Salzburg station coverage depends on what the EAWS feed carries.
 
 **Phase 2 – snow quality and safety**
 - Daily station history, snow-state machine (§4), aspect roses from

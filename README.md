@@ -1,5 +1,8 @@
 # where2ski
 
+[![pipeline](https://github.com/cczapka/where2ski/actions/workflows/pipeline.yml/badge.svg)](https://github.com/cczapka/where2ski/actions/workflows/pipeline.yml)
+[![android](https://github.com/cczapka/where2ski/actions/workflows/android.yml/badge.svg)](https://github.com/cczapka/where2ski/actions/workflows/android.yml)
+
 An Android app that suggests **where and when** to go skiing from Munich:
 Bavarian Alps, Tyrol (Snow Card Tirol) and the Salzburg area, with a focus on
 free skiing but useful for piste days too.
@@ -54,6 +57,11 @@ map and a detail page per resort. The `android` workflow builds a debug APK on
 every push and attaches it to the workflow run.
 
 Open `android/` in Android Studio, or build with `./gradlew :app:assembleDebug`.
+
+To try it without a build: open the latest successful run of the `android`
+workflow on GitHub, download the `where2ski-debug-apk` artifact, unzip it and
+install the APK on the phone (installation from unknown sources must be
+allowed once). The debug build is unsigned for stores but fine for personal use.
 
 ## Data sources and attribution
 
