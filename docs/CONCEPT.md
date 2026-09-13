@@ -16,14 +16,15 @@ with open, documented data.
 | Aspect | Decision |
 |---|---|
 | Region | Bavarian Alps (DE-BY), Tyrol (AT-07 incl. East Tyrol), Salzburg (AT-05). Extendable. |
-| Resorts | Curated registry (see §7). Start with ~40: the Snow Card Tirol resorts you actually reach in ≤ 2.5 h plus Bavarian and Salzburg ones. |
+| Resorts | Curated registry (see §7) of the major resorts only: the larger Snow Card Tirol areas within ~2.5 h of Munich plus the main Bavarian and Salzburg resorts. Very small Snow Card areas are deliberately left out. |
 | Modes | **Freeride** and **Piste**. Same data, different weights and blockers. |
 | Horizon | Today + 9 days (matches the Python prototype); confidence decays with lead time. |
 | Passes | Each resort carries a `passes` list (`snowcard_tirol`, `ski_amade`, …). "Snow Card Tirol only" is a filter, not a hard rule. |
 | Output | A ranked list per day, a day × resort matrix ("when"), a map, and a resort detail page with the reasoning ("why"). |
 
 Free skiing is interpreted as lift-accessed off-piste within resorts. Ski
-touring is out of scope for now but the same model would apply.
+touring is enjoyed too but is out of scope for now; the same snow-quality and
+avalanche model would apply to touring zones later.
 
 ---
 
@@ -404,6 +405,22 @@ Kotlin/Compose is recommended over Flutter because there is no iOS
 requirement and Android-native background work, widgets and maps are
 simpler; Flutter is the alternative if iOS should come later.
 
+### 8.1 Where the pipeline can run (no own server needed)
+
+| Option | Cost | Scheduling | Persistence for history | Caveats |
+|---|---|---|---|---|
+| **GitHub Actions cron + GitHub Pages** (recommended start) | Free on a public repo: unlimited Actions minutes on standard runners, Pages free. Private repo: 2 000 min/month free (a 3-min job every 3 h ≈ 720 min/month) but Pages then needs a paid plan. | `schedule:` cron, UTC; runs can be delayed by minutes to tens of minutes under load. Publish with `actions/deploy-pages` from an artifact so JSON does not bloat git history. | Commit a small daily snapshot (~100 KB) to a `data/` folder, or re-fetch history from the sources (lawinen.report keeps dated station snapshots, Open-Meteo has `past_days`). | Scheduled workflows on public repos are disabled after 60 days without repository activity; the daily data commit counts as activity, or add a keepalive step. Pages soft limits: 1 GB site, 100 GB/month bandwidth. |
+| **Cloudflare Workers cron + KV/R2** | Free: 100 000 requests/day, 3 cron triggers per Worker, KV 1 GB and 1 000 writes/day, R2 10 GB. | Cron triggers, 1-minute minimum, reliable timing. | KV or R2 objects. | Worker runtime is JavaScript/TypeScript (Python Workers still experimental), 10 ms CPU per invocation on the free plan, so heavy computation must be split or moved. |
+| **Cloud scheduler + serverless job** (Google Cloud Run Jobs, AWS Lambda) | Effectively free at this volume, but a credit card and billing account are required. | Cloud Scheduler / EventBridge, exact timing. | Object storage or a small database. | More setup and IAM than the task needs. |
+| **Own VPS** (e.g. Hetzner) | ~4–5 €/month. | Plain cron. | SQLite, unlimited. | You maintain OS updates, TLS and backups. Only worth it if you later want a real API or ML training. |
+| **On-device only** | Free, no infrastructure. | WorkManager periodic fetch (≥ 15 min). | Open-Meteo `past_days` and the dated station snapshots give enough history for the snow model; daily rating data stays local. | Every app open re-fetches ~10 sources and recomputes; no shared cache; harder to debug data problems. Viable as a fallback if the pipeline becomes a burden. |
+
+Decision: start with GitHub Actions + Pages on this public repository. Keep the
+pipeline a plain Python package with a `run` entry point so the same code can
+move to a Worker, a container or a VPS without changes to the app, which only
+ever reads static JSON.
+
+
 ---
 
 ## 9. Roadmap
@@ -427,13 +444,13 @@ simpler; Flutter is the alternative if iOS should come later.
 
 ---
 
-## 10. Decisions to take
+## 10. Decisions
 
-1. Freeride = lift-accessed off-piste only, or also touring? (assumed: off-piste only)
-2. Initial resort list: curated ~40 or the full Snow Card Tirol list? (assumed: curated)
-3. Backend via GitHub Actions + Pages (data is public anyway) vs. everything on the phone? (recommended: pipeline)
-4. Kotlin/Compose native vs. Flutter? (recommended: Kotlin)
-5. Default weights: is sun or powder the tie-breaker for you? (assumed: powder in freeride, sun in piste mode)
+1. **Decided:** freeride = lift-accessed off-piste within resorts. Touring is of interest but deferred.
+2. **Decided:** curated list of major resorts; tiny Snow Card Tirol areas are excluded.
+3. **Proposed:** GitHub Actions + Pages pipeline on this public repo (see §8.1); no own server.
+4. Open: Kotlin/Compose native vs. Flutter (recommended: Kotlin).
+5. Open: sun or powder as tie-breaker (assumed: powder in freeride, sun in piste mode).
 
 ---
 
