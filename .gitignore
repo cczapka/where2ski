@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.egg-info/
+
+# Android / Gradle
+app/build/
+app/.gradle/
+app/local.properties
+*.apk
+*.aab
+.idea/
+*.iml
+
+# Pipeline output and caches
+pipeline/cache/
+pipeline/out/
+
+# OS
+.DS_Store
