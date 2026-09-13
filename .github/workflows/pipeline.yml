@@ -1,0 +1,106 @@
+name: pipeline
+
+on:
+  schedule:
+    - cron: "17 */3 * * *"
+  workflow_dispatch:
+  push:
+    paths:
+      - "pipeline/**"
+      - ".github/workflows/pipeline.yml"
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pipeline
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: pipeline
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: pipeline/requirements-dev.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: Unit tests
+        run: python -m pytest -q
+
+      - name: Restore source cache
+        uses: actions/cache@v4
+        with:
+          path: pipeline/cache
+          key: pipeline-cache-${{ github.run_id }}
+          restore-keys: |
+            pipeline-cache-
+
+      - name: Run pipeline
+        run: python -m where2ski_pipeline run --registry data/resorts.json --out out --cache cache -v
+
+      - name: Show summary
+        run: |
+          python - <<'PY'
+          import json
+          d = json.load(open("out/latest.json"))
+          print("generated", d["generated_at"], "today", d["today"])
+          print("sources", json.dumps(d["status"]["sources"], indent=1)[:3000])
+          for r in sorted(d["resorts"], key=lambda x: -(x["days"][0]["scores"]["freeride"] if x["days"] else 0))[:15]:
+              t = r["days"][0] if r["days"] else None
+              if t:
+                  print(f"{r['name'][:34]:34} fr {t['scores']['freeride']:5.1f} pi {t['scores']['piste']:5.1f} "
+                        f"{t['snow']['state']:15} hn24 {t['snow']['hn24']:5.1f} hs {str(t['snow']['hs']):>5} ({t['snow']['hs_source']}) "
+                        f"sun {t['weather']['sun_hours']:4.1f}h stations {len(r['stations'])} region {r['micro_region']}")
+              else:
+                  print(r["name"], "ERROR", r.get("error"))
+          PY
+
+      - name: Store daily station snapshot
+        if: github.event_name != 'pull_request'
+        run: |
+          day=$(python -c "import json;print(json.load(open('out/snapshot.json'))['date'])")
+          f="data/snapshots/${day}.json"
+          if [ -f "$f" ]; then
+            echo "snapshot for ${day} already stored"
+            exit 0
+          fi
+          cp out/snapshot.json "$f"
+          git config user.name "where2ski-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add "$f"
+          git commit -m "Store station snapshot ${day}"
+          git pull --rebase origin "${GITHUB_REF_NAME}" || true
+          git push origin "HEAD:${GITHUB_REF_NAME}"
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: pipeline/out
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

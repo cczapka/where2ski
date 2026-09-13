@@ -6,9 +6,11 @@ venv/
 *.egg-info/
 
 # Android / Gradle
-app/build/
-app/.gradle/
-app/local.properties
+android/build/
+android/app/build/
+android/.gradle/
+android/.kotlin/
+android/local.properties
 *.apk
 *.aab
 .idea/
@@ -17,6 +19,7 @@ app/local.properties
 # Pipeline output and caches
 pipeline/cache/
 pipeline/out/
+pipeline/.pytest_cache/
 
 # OS
 .DS_Store
