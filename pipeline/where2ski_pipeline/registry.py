@@ -23,6 +23,7 @@ class Resort:
     aspect_rose: dict | None = None
     season: dict | None = None
     notes: str | None = None
+    terrain: dict | None = None
 
     @property
     def base(self) -> float:
@@ -51,12 +52,24 @@ class Resort:
             "micro_region": self.micro_region,
             "aspect_rose": self.aspect_rose,
             "season": self.season,
+            "terrain": self.terrain,
         }
 
 
-def load_resorts(path: Path) -> list[Resort]:
+def load_terrain(path: Path | None) -> dict:
+    if path is None or not Path(path).exists():
+        return {}
+    data = json.loads(Path(path).read_text(encoding="utf-8"))
+    return data.get("resorts", {}) if isinstance(data, dict) else {}
+
+
+def load_resorts(path: Path, terrain_path: Path | None = None) -> list[Resort]:
     data = json.loads(Path(path).read_text(encoding="utf-8"))
     items = data["resorts"] if isinstance(data, dict) else data
+    if terrain_path is None:
+        candidate = Path(path).with_name("terrain.json")
+        terrain_path = candidate if candidate.exists() else None
+    terrain = load_terrain(terrain_path)
     resorts = []
     for item in items:
         resorts.append(
@@ -77,6 +90,11 @@ def load_resorts(path: Path) -> list[Resort]:
                 notes=item.get("notes"),
             )
         )
+        t = terrain.get(item["id"])
+        if t:
+            resorts[-1].terrain = {k: v for k, v in t.items() if k != "aspect_rose"}
+            if resorts[-1].aspect_rose is None and t.get("aspect_rose"):
+                resorts[-1].aspect_rose = t["aspect_rose"]
     ids = [r.id for r in resorts]
     if len(ids) != len(set(ids)):
         raise ValueError("duplicate resort ids in registry")

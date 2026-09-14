@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from .. import config
 from ..geo import haversine_km
@@ -51,6 +51,7 @@ class Station:
     time: str | None = None
     operator: str | None = None
     micro_region: str | None = None
+    data_urls: list = field(default_factory=list)
 
     def public(self) -> dict:
         return {
@@ -146,6 +147,9 @@ def parse_station_feature(feature: dict) -> Station | None:
     st.time = pick_text(flat, "time")
     st.operator = pick_text(flat, "operator")
     st.micro_region = pick_text(flat, "micro_region")
+    urls = props.get("dataURLs")
+    if isinstance(urls, list):
+        st.data_urls = [str(u) for u in urls if isinstance(u, str)]
     # plausibility: snow height 0..800 cm; negative height differences mean settling, not new snow
     if st.hs is not None and (st.hs < 0 or st.hs > 800):
         st.hs = None

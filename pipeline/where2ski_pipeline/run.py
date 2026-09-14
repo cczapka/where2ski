@@ -12,11 +12,12 @@ from zoneinfo import ZoneInfo
 from . import __version__, config
 from .http import Http
 from .model import score as scoring
-from .model.snow import assess_day, day_weather
+from .model.snow import ASPECTS, assess_resort_day, day_weather
 from .registry import Resort, load_resorts
 from .sources.bulletin import fetch_bulletins, fetch_micro_regions, find_micro_region
 from .sources.holidays import crowd_factor, fetch_holidays
 from .sources.openmeteo import fetch_resort_forecast
+from .sources.smet import fetch_history
 from .sources.stations import load_stations, map_stations, weighted
 
 log = logging.getLogger(__name__)
@@ -46,6 +47,12 @@ def assess_resort(resort: Resort, http: Http, today: date, days: list[date], sta
     mapped = map_stations(resort, stations)
     station_hs = weighted(mapped, "hs")
     station_hn = {k: weighted(mapped, k) for k in ("hn24", "hn48", "hn72")} if mapped else None
+    history = None
+    for m in mapped:
+        if m.station.data_urls:
+            history = fetch_history(http, m.station)
+            if history is not None:
+                break
 
     micro = resort.micro_region or find_micro_region(micro_features.get(resort.region, []), resort.lat, resort.lon)
     if micro is None and mapped:
@@ -54,11 +61,10 @@ def assess_resort(resort: Resort, http: Http, today: date, days: list[date], sta
 
     out_days = []
     for lead, day in enumerate(days):
-        snow = assess_day(mid, top, day, today, station_hs=station_hs, station_hn=station_hn, glacier=resort.glacier)
-        weather = day_weather(base, mid, top, day)
         level_mid = level_top = None
         avalanche = None
         bulletin = None
+        flagged: set[str] = set()
         if micro and lead <= 1:
             for_day = bulletins_by_day.get(resort.region, {}).get(day.isoformat()) or {}
             bulletin = for_day.get(micro)
@@ -66,6 +72,8 @@ def assess_resort(resort: Resort, http: Http, today: date, days: list[date], sta
                 bulletin = (bulletins_by_day.get(resort.region, {}).get(today.isoformat()) or {}).get(micro)
         if bulletin is not None:
             has_bulletin = True
+            for p in bulletin.problems_at(resort.top) + bulletin.problems_at(resort.mid):
+                flagged.update(a for a in p.aspects if a in ASPECTS)
             level_mid = bulletin.level_at(resort.mid)
             level_top = bulletin.level_at(resort.top)
             avalanche = {
@@ -77,6 +85,10 @@ def assess_resort(resort: Resort, http: Http, today: date, days: list[date], sta
                 "valid": bulletin.valid_date,
                 "source": bulletin.source,
             }
+        snow = assess_resort_day(mid, top, day, today, resort.aspect_rose, station_hs=station_hs,
+                                 station_hn=station_hn, glacier=resort.glacier, history=history,
+                                 flagged_aspects=flagged)
+        weather = day_weather(base, mid, top, day)
         level = max([lv for lv in (level_mid, level_top) if lv is not None], default=None)
         crowd = crowd_factor(day, holidays)
         factors = scoring.build_factors(snow, weather, level, resort.travel_min, crowd)
@@ -98,6 +110,11 @@ def assess_resort(resort: Resort, http: Http, today: date, days: list[date], sta
 
     result = resort.public()
     result["micro_region"] = micro
+    result["station_history"] = None if history is None else {
+        "station": history.station, "from": history.start.isoformat(timespec="minutes") if history.start else None,
+        "to": history.end.isoformat(timespec="minutes") if history.end else None,
+        "has_tss": any(v is not None for v in history.values.get("TSS", [])),
+    }
     result["stations"] = [
         {**m.station.public(), "distance_km": m.distance_km, "weight": round(m.weight, 2)} for m in mapped
     ]
@@ -144,6 +161,8 @@ def run(registry: Path, out_dir: Path, cache_dir: Path | None = None, offline_di
     for resort in resorts:
         try:
             results.append(assess_resort(resort, http, today, days, stations, bulletins_by_day, micro_features, holidays))
+            if results[-1].get("station_history"):
+                status["sources"]["station_history"] = status["sources"].get("station_history", 0) + 1
         except Exception as exc:  # noqa: BLE001
             log.error("resort %s failed: %s\n%s", resort.id, exc, traceback.format_exc())
             item = resort.public()

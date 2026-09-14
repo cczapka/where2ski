@@ -29,7 +29,10 @@ class ScoringTest {
                 "factors": {"fresh_snow": 1.0, "snow_quality_freeride": 1.0, "snow_quality_piste": 0.9, "avalanche": 0.8,
                             "sun_vis": 0.5, "wind": 1.0, "temperature": 1.0, "base": 1.0, "travel": 0.6, "crowd": 1.0},
                 "confidence": 1.0, "badges": ["powder_day"],
-                "snow": {"state": "fresh_powder", "hn24": 20, "hn48": 30, "hn72": 35, "hs": 120, "hs_source": "station"},
+                "snow": {"state": "fresh_powder", "hn24": 20, "hn48": 30, "hn72": 35, "hs": 120, "hs_source": "station",
+                         "aspect": "N", "best_aspect": "S",
+                         "by_aspect": {"N": {"share": 0.4, "state": "fresh_powder", "value_freeride": 0.2, "value_piste": 0.9, "capped": true},
+                                       "S": {"share": 0.6, "state": "fresh_powder", "value_freeride": 1.0, "value_piste": 0.9, "capped": false}}},
                 "weather": {"sun_hours": 4.0, "t_mean_day_mid": -6.0},
                 "avalanche": {"level_mid": 2, "level_top": 3, "problems": [{"type": "wind_slab", "aspects": ["N"], "elevation": "above 2200 m"}]}},
                {"date": "2026-01-16", "lead": 1, "scores": {"freeride": 0.0, "piste": 70.0},
@@ -50,6 +53,9 @@ class ScoringTest {
         assertEquals("https://example.org", r.link("bergfex"))
         assertEquals(120.0, r.days[0].snow.hs!!, 1e-9)
         assertEquals(3, r.days[0].avalanche?.levelTop)
+        assertEquals("S", r.days[0].snow.bestAspect)
+        assertEquals(true, r.days[0].snow.byAspect["N"]?.capped)
+        assertEquals(0.6, r.days[0].snow.byAspect["S"]!!.share, 1e-9)
         assertEquals(null, r.days[1].avalanche)
     }
 

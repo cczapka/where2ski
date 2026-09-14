@@ -109,6 +109,10 @@ def registry_path(tmp_path):
     ]}
     p = tmp_path / "resorts.json"
     p.write_text(json.dumps(reg), encoding="utf-8")
+    terrain = {"generated_at": "2026-01-01T00:00:00Z", "resorts": {
+        "kuehtai": {"aspect_rose": {"N": 0.3, "NE": 0.1, "E": 0.05, "SE": 0.1, "S": 0.15, "SW": 0.1, "W": 0.1, "NW": 0.1},
+                    "elev_p05": 2050, "elev_p95": 2500, "run_km": 40.5, "n_runs": 30}}}
+    (tmp_path / "terrain.json").write_text(json.dumps(terrain), encoding="utf-8")
     return p
 
 

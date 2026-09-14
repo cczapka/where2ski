@@ -116,6 +116,10 @@ private fun RankingCard(item: RankedResort, mode: Mode, onClick: () -> Unit) {
                 Text(item.resort.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                 val line1 = buildString {
                     append(stateLabel(d.snow.state))
+                    d.snow.bestAspect?.let { best ->
+                        val bs = d.snow.byAspect[best]
+                        if (bs != null && bs.state != d.snow.state) append(" · $best: ${stateLabel(bs.state)}")
+                    }
                     append(" · new ${fmtCm(d.snow.hn24)} / 72 h ${fmtCm(d.snow.hn72)}")
                     if (d.snow.hs != null) append(" · base ${fmtCm(d.snow.hs)}")
                 }

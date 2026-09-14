@@ -55,6 +55,61 @@ def season_factor(day: date) -> float:
     return table.get(day.month, 1.0)
 
 
+ASPECTS = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
+ASPECT_SUN_BASE = {"N": 0.15, "NE": 0.3, "E": 0.6, "SE": 0.85, "S": 1.0, "SW": 0.85, "W": 0.6, "NW": 0.3}
+SPRING_BLEND = {10: 0.2, 11: 0.1, 12: 0.0, 1: 0.0, 2: 0.25, 3: 0.5, 4: 0.7, 5: 0.8}
+UNIFORM_ROSE = {a: 1.0 / len(ASPECTS) for a in ASPECTS}
+DEFAULT_ASPECT_FACTOR = 0.6
+
+
+def aspect_sun_factor(aspect: str, day: date) -> float:
+    """How much of the daily sunshine reaches a slope of this aspect (mid-winter: north faces almost none)."""
+    base = ASPECT_SUN_BASE[aspect]
+    blend = SPRING_BLEND.get(day.month, 0.5)
+    return base + (1.0 - base) * blend
+
+
+def normalise_rose(rose: dict | None) -> dict:
+    if not rose:
+        return dict(UNIFORM_ROSE)
+    total = sum(float(rose.get(a, 0.0)) for a in ASPECTS)
+    if total <= 0:
+        return dict(UNIFORM_ROSE)
+    return {a: float(rose.get(a, 0.0)) / total for a in ASPECTS}
+
+
+def _hour_rows(mid: HourlySeries, history, start: datetime, end: datetime):
+    """(model air T, station air T, station snow-surface T) per forecast hour in [start, end)."""
+    temps = mid.get("temperature_2m")
+    for i in mid.indices(start, end):
+        t = mid.times[i]
+        h = history.hourly.get(t) if history is not None else None
+        yield temps[i], (h or {}).get("ta"), (h or {}).get("tss")
+
+
+def melt_hours_between(mid: HourlySeries, history, start: datetime, end: datetime) -> int:
+    """Hours with melting: surface temperature >= -0.5 °C where measured, else air temperature > 0 °C."""
+    n = 0
+    for model, ta, tss in _hour_rows(mid, history, start, end):
+        if tss is not None:
+            n += tss >= -0.5
+        elif ta is not None:
+            n += ta > 0.0
+        elif model is not None:
+            n += model > 0.0
+    return n
+
+
+def surface_temps(mid: HourlySeries, history, start: datetime, end: datetime) -> list[float]:
+    """Best available temperature for refreeze detection: surface, else station air, else model air."""
+    out = []
+    for model, ta, tss in _hour_rows(mid, history, start, end):
+        v = tss if tss is not None else (ta if ta is not None else model)
+        if v is not None:
+            out.append(v)
+    return out
+
+
 @dataclass
 class SnowAssessment:
     state: str
@@ -73,10 +128,16 @@ class SnowAssessment:
     rain_hours: int
     gust_max: float | None
     reasons: list[str] = field(default_factory=list)
+    aspect: str | None = None
+    best_aspect: str | None = None
+    by_aspect: dict | None = None
 
     def public(self) -> dict:
         return {
             "state": self.state,
+            "aspect": self.aspect,
+            "best_aspect": self.best_aspect,
+            "by_aspect": self.by_aspect,
             "value_freeride": round(self.value_freeride, 2),
             "value_piste": round(self.value_piste, 2),
             "hn24": round(self.hn24, 1),
@@ -97,7 +158,8 @@ class SnowAssessment:
 
 def assess_day(mid: HourlySeries, top: HourlySeries, day: date, today: date,
                station_hs: float | None = None, station_hn: dict | None = None,
-               aspect_factor: float = 0.6, glacier: bool = False) -> SnowAssessment:
+               aspect_factor: float = DEFAULT_ASPECT_FACTOR, glacier: bool = False,
+               history=None) -> SnowAssessment:
     noon = datetime.combine(day, datetime.min.time()) + timedelta(hours=12)
     day_start = datetime.combine(day, datetime.min.time())
     day_end = day_start + timedelta(days=1)
@@ -140,8 +202,7 @@ def assess_day(mid: HourlySeries, top: HourlySeries, day: date, today: date,
     since = last_end if last_end is not None else noon - timedelta(days=10)
     days_since = (noon - last_end).total_seconds() / 86400 if last_end else None
 
-    temps = mid.slice("temperature_2m", since, noon)
-    melt_hours = sum(1 for t in temps if t is not None and t > 0.0)
+    melt_hours = melt_hours_between(mid, history, since, noon)
     rain = mid.slice("rain", since, noon)
     rain_hours = sum(1 for r in rain if r is not None and r > 0.2)
     sun_since = _sum(mid.slice("sunshine_duration", since, noon)) / 3600.0
@@ -153,13 +214,13 @@ def assess_day(mid: HourlySeries, top: HourlySeries, day: date, today: date,
     d = since.date()
     while d < day:
         ds = datetime.combine(d, datetime.min.time())
-        tmax = _max(mid.slice("temperature_2m", ds + timedelta(hours=9), ds + timedelta(hours=17)))
-        tmin = _min(mid.slice("temperature_2m", ds + timedelta(hours=20), ds + timedelta(hours=32)))
-        if tmax is not None and tmin is not None and tmax > 0.5 and tmin < -1.0:
+        tmax = _max(surface_temps(mid, history, ds + timedelta(hours=9), ds + timedelta(hours=17)))
+        tmin = _min(surface_temps(mid, history, ds + timedelta(hours=20), ds + timedelta(hours=32)))
+        if tmax is not None and tmin is not None and tmax > -0.5 and tmin < -1.0:
             cycles += 1
         d += timedelta(days=1)
 
-    night_min = _min(mid.slice("temperature_2m", day_start - timedelta(hours=4), day_start + timedelta(hours=8)))
+    night_min = _min(surface_temps(mid, history, day_start - timedelta(hours=4), day_start + timedelta(hours=8)))
     refreeze = night_min is not None and night_min < -1.0
     t_day = _mean(mid.slice("temperature_2m", day_start + timedelta(hours=9), day_start + timedelta(hours=16)))
     sun_day = _sum(mid.slice("sunshine_duration", day_start, day_end)) / 3600.0
@@ -194,6 +255,58 @@ def assess_day(mid: HourlySeries, top: HourlySeries, day: date, today: date,
                           hs=hs, hs_source=hs_source, days_since_snow=days_since, melt_hours=melt_hours,
                           sun_load=sun_load, cycles=cycles, refreeze=refreeze, rain_hours=rain_hours,
                           gust_max=gust_max, reasons=reasons)
+
+
+def assess_resort_day(mid: HourlySeries, top: HourlySeries, day: date, today: date, rose: dict | None,
+                      station_hs: float | None = None, station_hn: dict | None = None, glacier: bool = False,
+                      history=None, flagged_aspects: set[str] | None = None) -> SnowAssessment:
+    """Assess every aspect sector, then aggregate with the resort's aspect rose.
+
+    Freeride quality is 70 % rose-weighted mean plus 30 % of the best sector
+    that holds at least 15 % of the terrain (you go where the snow is good).
+    Sectors flagged by an avalanche problem are capped at 0.2 for freeride.
+    Piste quality is the plain rose-weighted mean.
+    """
+    rose_n = normalise_rose(rose)
+    flagged = set(flagged_aspects or ())
+    per = {a: assess_day(mid, top, day, today, station_hs=station_hs, station_hn=station_hn,
+                         aspect_factor=aspect_sun_factor(a, day), glacier=glacier, history=history)
+           for a in ASPECTS}
+    vf = {a: (min(per[a].value_freeride, 0.2) if a in flagged else per[a].value_freeride) for a in ASPECTS}
+    weighted_f = sum(rose_n[a] * vf[a] for a in ASPECTS)
+    weighted_p = sum(rose_n[a] * per[a].value_piste for a in ASPECTS)
+    relevant = [a for a in ASPECTS if rose_n[a] >= 0.15] or [max(ASPECTS, key=lambda a: rose_n[a])]
+    best = max(relevant, key=lambda a: (vf[a], rose_n[a]))
+    agg_f = min(1.0, 0.7 * weighted_f + 0.3 * vf[best])
+    dominant = max(ASPECTS, key=lambda a: rose_n[a])
+
+    rep = per[dominant]
+    rep.aspect = dominant
+    rep.best_aspect = best
+    rep.value_freeride = round(agg_f, 3)
+    rep.value_piste = round(weighted_p, 3)
+    rep.by_aspect = {
+        a: {
+            "share": round(rose_n[a], 3),
+            "state": per[a].state,
+            "value_freeride": round(vf[a], 2),
+            "value_piste": round(per[a].value_piste, 2),
+            "capped": a in flagged,
+            "sun_load": round(per[a].sun_load, 1),
+        }
+        for a in ASPECTS
+    }
+    reasons = list(rep.reasons)
+    if per[best].state != rep.state:
+        reasons.append(f"best aspect {best} ({int(rose_n[best] * 100)} % of terrain): {per[best].state}")
+    else:
+        reasons.append(f"best aspect {best} ({int(rose_n[best] * 100)} % of terrain)")
+    if flagged:
+        reasons.append("avalanche problem on " + "/".join(a for a in ASPECTS if a in flagged) + ": those aspects capped")
+    if history is not None:
+        reasons.append(f"melt/refreeze from station {history.station} measurements")
+    rep.reasons = reasons
+    return rep
 
 
 @dataclass

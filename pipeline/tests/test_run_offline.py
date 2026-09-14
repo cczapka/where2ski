@@ -21,6 +21,12 @@ def test_end_to_end_offline(registry_path, offline_dir, tmp_path):
     today = k["days"][0]
     assert today["snow"]["hs"] == 112 and today["snow"]["hs_source"] == "station"
     assert today["snow"]["state"] == "fresh_powder"
+    assert set(today["snow"]["by_aspect"]) == {"N", "NE", "E", "SE", "S", "SW", "W", "NW"}
+    # wind slab on N/NE/E above 2200 m in the fixture bulletin caps those aspects
+    assert today["snow"]["by_aspect"]["N"]["capped"] and not today["snow"]["by_aspect"]["S"]["capped"]
+    assert today["snow"]["best_aspect"] in ("SE", "S", "SW", "W", "NW")
+    assert k["aspect_rose"] is not None and abs(sum(k["aspect_rose"].values()) - 1.0) < 1e-6
+    assert k["terrain"]["run_km"] == 40.5
     assert today["avalanche"]["level_top"] == 3 and today["avalanche"]["level_mid"] == 3
     assert today["scores"]["freeride"] > 60
     assert today["blockers"] == {"freeride": [], "piste": []}

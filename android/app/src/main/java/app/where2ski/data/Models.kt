@@ -48,6 +48,9 @@ data class ResortConditions(
     val glacier: Boolean = false,
     val links: JsonObject = JsonObject(emptyMap()),
     @SerialName("micro_region") val microRegion: String? = null,
+    @SerialName("aspect_rose") val aspectRose: Map<String, Double>? = null,
+    val terrain: TerrainInfo? = null,
+    @SerialName("station_history") val stationHistory: StationHistoryInfo? = null,
     val stations: List<StationInfo> = emptyList(),
     val days: List<DayConditions> = emptyList(),
     val error: String? = null,
@@ -70,8 +73,36 @@ data class DayConditions(
 )
 
 @Serializable
+data class TerrainInfo(
+    @SerialName("elev_p05") val elevP05: Int? = null,
+    @SerialName("elev_p95") val elevP95: Int? = null,
+    @SerialName("run_km") val runKm: Double? = null,
+    @SerialName("n_runs") val nRuns: Int? = null,
+)
+
+@Serializable
+data class StationHistoryInfo(
+    val station: String = "",
+    val from: String? = null,
+    val to: String? = null,
+    @SerialName("has_tss") val hasTss: Boolean = false,
+)
+
+@Serializable
+data class AspectState(
+    val share: Double = 0.0,
+    val state: String = "unknown",
+    @SerialName("value_freeride") val valueFreeride: Double = 0.0,
+    @SerialName("value_piste") val valuePiste: Double = 0.0,
+    val capped: Boolean = false,
+)
+
+@Serializable
 data class SnowInfo(
     val state: String = "unknown",
+    val aspect: String? = null,
+    @SerialName("best_aspect") val bestAspect: String? = null,
+    @SerialName("by_aspect") val byAspect: Map<String, AspectState> = emptyMap(),
     val hn24: Double = 0.0,
     val hn48: Double = 0.0,
     val hn72: Double = 0.0,

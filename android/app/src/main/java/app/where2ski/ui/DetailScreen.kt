@@ -109,13 +109,30 @@ private fun DayDetails(resort: ResortConditions, day: DayConditions, settings: U
     }
 
     SectionTitle("Snow")
-    KeyValue("Surface", stateLabel(day.snow.state))
+    KeyValue("Surface", stateLabel(day.snow.state) + (day.snow.aspect?.let { " (${it}-facing terrain)" } ?: ""))
+    day.snow.bestAspect?.let { best ->
+        val bs = day.snow.byAspect[best]
+        if (bs != null) KeyValue("Best aspect", "$best · ${stateLabel(bs.state)} · ${(bs.share * 100).toInt()} % of terrain")
+    }
     KeyValue("New snow 24 / 48 / 72 h", "${fmtCm(day.snow.hn24)} / ${fmtCm(day.snow.hn48)} / ${fmtCm(day.snow.hn72)}")
     KeyValue("Base depth", "${fmtCm(day.snow.hs)} (${day.snow.hsSource})")
     KeyValue("Days since snowfall", day.snow.daysSinceSnow?.let { "%.0f".format(it) } ?: "> 10")
     KeyValue("Hours above 0 °C since", day.snow.meltHours.toString())
     KeyValue("Melt-freeze cycles", day.snow.cycles.toString())
     day.snow.reasons.forEach { Text("• $it", style = MaterialTheme.typography.bodySmall) }
+
+    if (day.snow.byAspect.isNotEmpty()) {
+        SectionTitle("Aspects")
+        val terrain = resort.terrain
+        Text(
+            if (resort.aspectRose != null && terrain != null)
+                "Terrain from OpenSkiMap: ${terrain.nRuns ?: 0} runs, ${"%.0f".format(terrain.runKm ?: 0.0)} km, ${terrain.elevP05 ?: 0}–${terrain.elevP95 ?: 0} m. Wedge length = share of terrain, colour = snow quality."
+            else
+                "No terrain data for this resort yet; all aspects are weighted equally. Colour = snow quality per aspect.",
+            style = MaterialTheme.typography.bodySmall,
+        )
+        AspectRose(day.snow.byAspect, settings.mode, day.snow.bestAspect, modifier = Modifier.padding(vertical = 8.dp))
+    }
 
     SectionTitle("Weather (mid mountain)")
     KeyValue("Sunshine", "%.1f h".format(day.weather.sunHours))
@@ -150,6 +167,15 @@ private fun DayDetails(resort: ResortConditions, day: DayConditions, settings: U
         }
     }
 
+    resort.stationHistory?.let { h ->
+        Text(
+            "Melt and refreeze detection uses measurements from station ${h.station}" +
+                (if (h.hasTss) " (snow-surface temperature)" else " (air temperature)") +
+                (h.to?.let { " up to ${it.replace('T', ' ')}" } ?: ""),
+            style = MaterialTheme.typography.bodySmall,
+            modifier = Modifier.padding(top = 8.dp),
+        )
+    }
     if (resort.stations.isNotEmpty()) {
         SectionTitle("Nearby stations")
         resort.stations.forEach { s ->
