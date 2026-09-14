@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-09-14T08:50:46+00:00",
+ "generated_at": "2026-09-14T09:54:40+00:00",
  "source": {
   "runs": "https://tiles.openskimap.org/geojson/runs.geojson",
   "ski_areas": "https://tiles.openskimap.org/geojson/ski_areas.geojson",
@@ -8,47 +8,51 @@
  "resorts": {
   "skiwelt": {
    "aspect_rose": {
-    "N": 0.173,
-    "NE": 0.1,
-    "E": 0.121,
-    "SE": 0.117,
-    "S": 0.097,
+    "N": 0.175,
+    "NE": 0.099,
+    "E": 0.12,
+    "SE": 0.116,
+    "S": 0.096,
     "SW": 0.108,
     "W": 0.124,
     "NW": 0.161
    },
    "elev_min": 609,
-   "elev_p05": 796,
-   "elev_p95": 1715,
+   "elev_p05": 789,
+   "elev_p95": 1714,
    "elev_max": 1865,
-   "run_km": 232.3,
-   "n_runs": 422,
+   "run_km": 233.6,
+   "n_runs": 426,
    "slope_median": 0.163,
    "ski_areas": [
     {
      "id": "37ee9c6ba5b44864ba844f804938a8b815f8b717",
      "name": "SkiWelt Wilder Kaiser - Brixental"
+    },
+    {
+     "id": "ec351df80c613efab5dfa46c84291076d91195e4",
+     "name": "Hochfeld - Schwoich"
     }
    ]
   },
   "kitzbuehel": {
    "aspect_rose": {
-    "N": 0.152,
-    "NE": 0.174,
-    "E": 0.159,
-    "SE": 0.083,
-    "S": 0.086,
-    "SW": 0.065,
-    "W": 0.112,
-    "NW": 0.17
+    "N": 0.138,
+    "NE": 0.155,
+    "E": 0.149,
+    "SE": 0.075,
+    "S": 0.092,
+    "SW": 0.075,
+    "W": 0.13,
+    "NW": 0.185
    },
    "elev_min": 762,
-   "elev_p05": 878,
-   "elev_p95": 1901,
-   "elev_max": 1992,
-   "run_km": 185.0,
-   "n_runs": 240,
-   "slope_median": 0.174,
+   "elev_p05": 862,
+   "elev_p95": 1891,
+   "elev_max": 1968,
+   "run_km": 153.1,
+   "n_runs": 206,
+   "slope_median": 0.176,
    "ski_areas": [
     {
      "id": "1eeb56a80185ff1dff644357f9f747842d0f620c",
@@ -76,6 +80,10 @@
    "slope_median": 0.175,
    "ski_areas": [
     {
+     "id": "32588b8e5e2088577a84cc5ff1fc3c5e21971c4e",
+     "name": "Hochkogel"
+    },
+    {
      "id": "7bbe4370de755694437795af4d89234c73ed73d4",
      "name": "St Johann in Tirol"
     }
@@ -83,123 +91,163 @@
   },
   "steinplatte": {
    "aspect_rose": {
-    "N": 0.362,
-    "NE": 0.267,
-    "E": 0.071,
-    "SE": 0.027,
-    "S": 0.033,
-    "SW": 0.078,
-    "W": 0.048,
-    "NW": 0.113
+    "N": 0.246,
+    "NE": 0.21,
+    "E": 0.205,
+    "SE": 0.064,
+    "S": 0.065,
+    "SW": 0.051,
+    "W": 0.055,
+    "NW": 0.104
    },
-   "elev_min": 1068,
-   "elev_p05": 1186,
-   "elev_p95": 1695,
+   "elev_min": 628,
+   "elev_p05": 966,
+   "elev_p95": 1664,
    "elev_max": 1853,
-   "run_km": 36.3,
-   "n_runs": 62,
-   "slope_median": 0.144,
+   "run_km": 69.5,
+   "n_runs": 114,
+   "slope_median": 0.153,
    "ski_areas": [
+    {
+     "id": "2774ee9df926487819e252679b539a79fd2024a0",
+     "name": "Skigebiet Almenwelt Lofer"
+    },
     {
      "id": "337c8cd2d65a8c5457b0ed96d99891837d17af68",
      "name": "Steinplatte Waidring-Tirol"
+    },
+    {
+     "id": "cd80ac0e9cbf0f08d1fa13538210ed1cb82e6d19",
+     "name": "Heutal"
+    },
+    {
+     "id": "da0f9586d3540cf73d6ff6ad06925bf4bdc51df0",
+     "name": "Hausberglift - Waidring"
     }
    ]
   },
   "fieberbrunn": {
    "aspect_rose": {
-    "N": 0.269,
-    "NE": 0.058,
-    "E": 0.204,
-    "SE": 0.068,
-    "S": 0.02,
-    "SW": 0.017,
-    "W": 0.128,
-    "NW": 0.235
+    "N": 0.237,
+    "NE": 0.182,
+    "E": 0.186,
+    "SE": 0.104,
+    "S": 0.058,
+    "SW": 0.041,
+    "W": 0.025,
+    "NW": 0.167
    },
-   "elev_min": 854,
-   "elev_p05": 858,
-   "elev_p95": 1435,
-   "elev_max": 1452,
-   "run_km": 18.5,
-   "n_runs": 25,
-   "slope_median": 0.167,
+   "elev_min": 831,
+   "elev_p05": 902,
+   "elev_p95": 1942,
+   "elev_max": 2015,
+   "run_km": 44.3,
+   "n_runs": 75,
+   "slope_median": 0.156,
    "ski_areas": [
     {
-     "id": "22b11fcce2846372ccbaafebb23f9038e105b3e5",
-     "name": "Buchensteinwand (Pillersee)"
+     "id": "180faeea32aba7b22fbe1438b0a3a82f6a2a4ad8",
+     "name": "Skicircus Saalbach-Hinterglemm Leogang Fieberbrunn"
     }
    ]
   },
   "ski-juwel": {
    "aspect_rose": {
-    "N": 0.185,
-    "NE": 0.294,
-    "E": 0.192,
-    "SE": 0.098,
-    "S": 0.061,
-    "SW": 0.018,
+    "N": 0.207,
+    "NE": 0.292,
+    "E": 0.182,
+    "SE": 0.092,
+    "S": 0.057,
+    "SW": 0.02,
     "W": 0.048,
-    "NW": 0.104
+    "NW": 0.102
    },
-   "elev_min": 818,
-   "elev_p05": 1022,
+   "elev_min": 552,
+   "elev_p05": 959,
    "elev_p95": 1880,
    "elev_max": 2031,
-   "run_km": 66.0,
-   "n_runs": 117,
+   "run_km": 71.1,
+   "n_runs": 132,
    "slope_median": 0.151,
    "ski_areas": [
     {
      "id": "4ae8be1df66f9e30fd3ba0b03cd191cda44665bc",
      "name": "Ski Juwel Alpbachtal-Wildschönau"
+    },
+    {
+     "id": "645bfbbcecbd948d732c41c910c79a672c2af640",
+     "name": "Sonnwendjochbahn Kramsach"
+    },
+    {
+     "id": "dd9946229ea34a0ace6370ed077cc0bb343187b0",
+     "name": "Ski Juwel - Reith im Alpbachtal"
+    },
+    {
+     "id": "f294677a642dea21db25738746af8bb69478a162",
+     "name": "Ski Juwel - Roggenboden"
     }
    ]
   },
   "zillertal-arena": {
    "aspect_rose": {
-    "N": 0.122,
+    "N": 0.121,
     "NE": 0.107,
     "E": 0.155,
-    "SE": 0.116,
+    "SE": 0.115,
     "S": 0.09,
-    "SW": 0.14,
+    "SW": 0.142,
     "W": 0.133,
     "NW": 0.137
    },
    "elev_min": 571,
-   "elev_p05": 1276,
-   "elev_p95": 2245,
+   "elev_p05": 1267,
+   "elev_p95": 2244,
    "elev_max": 2501,
-   "run_km": 118.9,
-   "n_runs": 217,
+   "run_km": 119.1,
+   "n_runs": 218,
    "slope_median": 0.172,
    "ski_areas": [
     {
      "id": "3db514cc8d256a5bc136d2f313e8b1ec1a578636",
      "name": "Zillertal Arena"
+    },
+    {
+     "id": "45eb2dce173d79b0da845d00af03a0ced64a9316",
+     "name": "Fürstalm (Zillertal Arena)"
+    },
+    {
+     "id": "73d3340a015877069712a9f6e24e3323ea83cb24",
+     "name": "Wintersportschule Krimml"
+    },
+    {
+     "id": "d6963e56-22e0-40db-9092-3c1599631052",
+     "name": null
     }
    ]
   },
   "hochzillertal": {
    "aspect_rose": {
-    "N": 0.163,
-    "NE": 0.254,
-    "E": 0.232,
-    "SE": 0.093,
-    "S": 0.041,
-    "SW": 0.028,
-    "W": 0.077,
-    "NW": 0.112
+    "N": 0.167,
+    "NE": 0.251,
+    "E": 0.239,
+    "SE": 0.106,
+    "S": 0.048,
+    "SW": 0.027,
+    "W": 0.064,
+    "NW": 0.098
    },
    "elev_min": 552,
-   "elev_p05": 1180,
-   "elev_p95": 2196,
+   "elev_p05": 1096,
+   "elev_p95": 2189,
    "elev_max": 2374,
-   "run_km": 80.3,
-   "n_runs": 163,
-   "slope_median": 0.2,
+   "run_km": 96.7,
+   "n_runs": 182,
+   "slope_median": 0.206,
    "ski_areas": [
+    {
+     "id": "69931ad5166c6a605bdbc8cb48fde87b78117576",
+     "name": "Spieljoch - Fügen"
+    },
     {
      "id": "99cef648d8c6f7231b60448092fb29de26069d0f",
      "name": "Hochzillertal-Hochfügen"
@@ -208,26 +256,30 @@
   },
   "mayrhofen": {
    "aspect_rose": {
-    "N": 0.07,
-    "NE": 0.13,
-    "E": 0.166,
-    "SE": 0.127,
-    "S": 0.105,
-    "SW": 0.138,
-    "W": 0.172,
-    "NW": 0.092
+    "N": 0.08,
+    "NE": 0.112,
+    "E": 0.139,
+    "SE": 0.115,
+    "S": 0.104,
+    "SW": 0.139,
+    "W": 0.193,
+    "NW": 0.118
    },
    "elev_min": 616,
-   "elev_p05": 1346,
-   "elev_p95": 2382,
+   "elev_p05": 1326,
+   "elev_p95": 2389,
    "elev_max": 2468,
-   "run_km": 108.0,
-   "n_runs": 212,
-   "slope_median": 0.153,
+   "run_km": 97.8,
+   "n_runs": 192,
+   "slope_median": 0.158,
    "ski_areas": [
     {
      "id": "0e7ba1fd10a2afbc6e188d1f9936f843cc665583",
      "name": "Mayrhofen Hippach"
+    },
+    {
+     "id": "5372192bd888c8a51229656860a694f038692eef",
+     "name": "Gerlosstein / Hainzenberg"
     }
    ]
   },
@@ -258,27 +310,23 @@
   },
   "stubaier-gletscher": {
    "aspect_rose": {
-    "N": 0.255,
-    "NE": 0.26,
-    "E": 0.202,
-    "SE": 0.056,
-    "S": 0.031,
-    "SW": 0.025,
-    "W": 0.068,
-    "NW": 0.103
+    "N": 0.239,
+    "NE": 0.241,
+    "E": 0.296,
+    "SE": 0.08,
+    "S": 0.028,
+    "SW": 0.015,
+    "W": 0.036,
+    "NW": 0.065
    },
-   "elev_min": 959,
-   "elev_p05": 1068,
-   "elev_p95": 3077,
+   "elev_min": 1684,
+   "elev_p05": 1774,
+   "elev_p95": 3127,
    "elev_max": 3208,
-   "run_km": 91.8,
-   "n_runs": 235,
-   "slope_median": 0.188,
+   "run_km": 47.1,
+   "n_runs": 93,
+   "slope_median": 0.197,
    "ski_areas": [
-    {
-     "id": "60bf2e0677cb20240633a22d4f82730130629872",
-     "name": "Stubai"
-    },
     {
      "id": "99f28adeace732787655c845a53fcce7ab4b8129",
      "name": "Stubaier Gletscher"
@@ -287,51 +335,67 @@
   },
   "schlick-2000": {
    "aspect_rose": {
-    "N": 0.255,
-    "NE": 0.26,
-    "E": 0.202,
-    "SE": 0.056,
-    "S": 0.031,
-    "SW": 0.025,
-    "W": 0.068,
-    "NW": 0.103
+    "N": 0.206,
+    "NE": 0.366,
+    "E": 0.154,
+    "SE": 0.014,
+    "S": 0.032,
+    "SW": 0.035,
+    "W": 0.1,
+    "NW": 0.092
    },
-   "elev_min": 959,
-   "elev_p05": 1068,
-   "elev_p95": 3077,
-   "elev_max": 3208,
-   "run_km": 91.8,
-   "n_runs": 235,
-   "slope_median": 0.188,
+   "elev_min": 1004,
+   "elev_p05": 1075,
+   "elev_p95": 2218,
+   "elev_max": 2236,
+   "run_km": 20.5,
+   "n_runs": 47,
+   "slope_median": 0.178,
    "ski_areas": [
     {
-     "id": "60bf2e0677cb20240633a22d4f82730130629872",
-     "name": "Stubai"
+     "id": "222578468bd24884d04bf5d8d29f7e2fe76a5198",
+     "name": "Schlick 2000"
     }
    ]
   },
   "axamer-lizum": {
    "aspect_rose": {
-    "N": 0.195,
-    "NE": 0.374,
-    "E": 0.181,
-    "SE": 0.053,
-    "S": 0.04,
-    "SW": 0.025,
-    "W": 0.038,
-    "NW": 0.094
+    "N": 0.201,
+    "NE": 0.368,
+    "E": 0.167,
+    "SE": 0.038,
+    "S": 0.036,
+    "SW": 0.028,
+    "W": 0.06,
+    "NW": 0.101
    },
-   "elev_min": 892,
-   "elev_p05": 1026,
-   "elev_p95": 2216,
+   "elev_min": 877,
+   "elev_p05": 1031,
+   "elev_p95": 2218,
    "elev_max": 2334,
-   "run_km": 37.9,
-   "n_runs": 52,
-   "slope_median": 0.235,
+   "run_km": 60.1,
+   "n_runs": 103,
+   "slope_median": 0.2,
    "ski_areas": [
+    {
+     "id": "217ceca7-ced2-4d59-ab39-b932152d6e5f",
+     "name": null
+    },
+    {
+     "id": "222578468bd24884d04bf5d8d29f7e2fe76a5198",
+     "name": "Schlick 2000"
+    },
     {
      "id": "4d065e674fc26a1c1142f9449bee9528e741468b",
      "name": "Axamer Lizum - Muttereralm"
+    },
+    {
+     "id": "9883031f-7d0e-492a-a77f-c40d8650a6a7",
+     "name": null
+    },
+    {
+     "id": "aa2eb186c26bf32a6977dd96c6c51b97d23851dd",
+     "name": "Sonnenlift Axams"
     }
    ]
   },
@@ -362,52 +426,56 @@
   },
   "kuehtai": {
    "aspect_rose": {
-    "N": 0.222,
-    "NE": 0.07,
-    "E": 0.058,
-    "SE": 0.107,
-    "S": 0.122,
-    "SW": 0.114,
-    "W": 0.107,
-    "NW": 0.201
+    "N": 0.227,
+    "NE": 0.043,
+    "E": 0.077,
+    "SE": 0.145,
+    "S": 0.171,
+    "SW": 0.111,
+    "W": 0.077,
+    "NW": 0.149
    },
-   "elev_min": 1408,
-   "elev_p05": 1570,
-   "elev_p95": 2376,
+   "elev_min": 1938,
+   "elev_p05": 1948,
+   "elev_p95": 2424,
    "elev_max": 2507,
-   "run_km": 52.2,
-   "n_runs": 123,
+   "run_km": 32.7,
+   "n_runs": 75,
    "slope_median": 0.199,
    "ski_areas": [
     {
      "id": "a12bb085d8e841022904dbed3e471f4088c8caff",
      "name": "Kühtai"
-    },
-    {
-     "id": "ac19567d24dc4579c52d9eeef24309e3665dfa89",
-     "name": "Hochoetz-Kühtai"
     }
    ]
   },
   "zugspitz-arena": {
    "aspect_rose": {
-    "N": 0.088,
-    "NE": 0.0,
-    "E": 0.002,
-    "SE": 0.002,
-    "S": 0.131,
-    "SW": 0.271,
-    "W": 0.323,
-    "NW": 0.182
+    "N": 0.078,
+    "NE": 0.095,
+    "E": 0.189,
+    "SE": 0.095,
+    "S": 0.075,
+    "SW": 0.143,
+    "W": 0.2,
+    "NW": 0.127
    },
-   "elev_min": 1002,
-   "elev_p05": 1005,
-   "elev_p95": 1439,
-   "elev_max": 1486,
-   "run_km": 12.0,
-   "n_runs": 22,
-   "slope_median": 0.177,
+   "elev_min": 987,
+   "elev_p05": 1038,
+   "elev_p95": 1987,
+   "elev_max": 2055,
+   "run_km": 53.3,
+   "n_runs": 97,
+   "slope_median": 0.18,
    "ski_areas": [
+    {
+     "id": "3b83b24cb810ad7699ad3a62b183cf3617da125e",
+     "name": "Ehrwalder Alm"
+    },
+    {
+     "id": "d5a7de306263a468a29d6d1c9fa093ed27b6452d",
+     "name": "Lermoos Grubigstein"
+    },
     {
      "id": "f0287cd7d10f61a4bdce90120aa9055593b0f55f",
      "name": "Skigebiet Ehrwalder Wettersteinbahnen"
@@ -466,23 +534,35 @@
   },
   "pitztal": {
    "aspect_rose": {
-    "N": 0.161,
-    "NE": 0.311,
-    "E": 0.311,
-    "SE": 0.065,
-    "S": 0.019,
-    "SW": 0.003,
-    "W": 0.028,
-    "NW": 0.102
+    "N": 0.142,
+    "NE": 0.285,
+    "E": 0.324,
+    "SE": 0.093,
+    "S": 0.061,
+    "SW": 0.022,
+    "W": 0.022,
+    "NW": 0.052
    },
-   "elev_min": 1723,
-   "elev_p05": 1796,
-   "elev_p95": 3352,
+   "elev_min": 1673,
+   "elev_p05": 1813,
+   "elev_p95": 3202,
    "elev_max": 3427,
-   "run_km": 31.0,
-   "n_runs": 34,
-   "slope_median": 0.176,
+   "run_km": 112.4,
+   "n_runs": 151,
+   "slope_median": 0.201,
    "ski_areas": [
+    {
+     "id": "6cfae7091be2a4d5e189e19aff8b4db5c8d0036b",
+     "name": "Vent"
+    },
+    {
+     "id": "78e5f98d8527df7216b08962f372659abcd4f711",
+     "name": "Sölden"
+    },
+    {
+     "id": "a710407367bee5d3a51e5dec4c2c6acc0ea5e432",
+     "name": "Rifflsee"
+    },
     {
      "id": "f1ae030e9b17ac258bb0eb30a0f769106518dfcd",
      "name": "Pitztaler Gletscher"
@@ -516,23 +596,27 @@
   },
   "serfaus-fiss-ladis": {
    "aspect_rose": {
-    "N": 0.099,
-    "NE": 0.199,
-    "E": 0.225,
-    "SE": 0.183,
-    "S": 0.114,
-    "SW": 0.072,
-    "W": 0.06,
-    "NW": 0.048
+    "N": 0.103,
+    "NE": 0.174,
+    "E": 0.211,
+    "SE": 0.175,
+    "S": 0.113,
+    "SW": 0.074,
+    "W": 0.082,
+    "NW": 0.068
    },
    "elev_min": 1222,
-   "elev_p05": 1531,
-   "elev_p95": 2631,
-   "elev_max": 2817,
-   "run_km": 166.1,
-   "n_runs": 255,
-   "slope_median": 0.199,
+   "elev_p05": 1485,
+   "elev_p95": 2576,
+   "elev_max": 2748,
+   "run_km": 166.9,
+   "n_runs": 267,
+   "slope_median": 0.196,
    "ski_areas": [
+    {
+     "id": "93f78af003dfe7aa2efa72fb091e67828d5ff77c",
+     "name": "Fendels"
+    },
     {
      "id": "e587928ea763f20b3232a5069c5d2438d09b6908",
      "name": "Serfaus Fiss Ladis"
@@ -566,26 +650,55 @@
   },
   "st-anton": {
    "aspect_rose": {
-    "N": 0.108,
-    "NE": 0.118,
-    "E": 0.181,
+    "N": 0.085,
+    "NE": 0.083,
+    "E": 0.162,
     "SE": 0.135,
-    "S": 0.128,
-    "SW": 0.118,
-    "W": 0.124,
-    "NW": 0.089
+    "S": 0.14,
+    "SW": 0.13,
+    "W": 0.164,
+    "NW": 0.102
    },
-   "elev_min": 1262,
-   "elev_p05": 1444,
-   "elev_p95": 2328,
+   "elev_min": 1280,
+   "elev_p05": 1446,
+   "elev_p95": 2360,
    "elev_max": 2642,
-   "run_km": 272.0,
-   "n_runs": 513,
-   "slope_median": 0.223,
+   "run_km": 163.3,
+   "n_runs": 314,
+   "slope_median": 0.236,
    "ski_areas": [
     {
      "id": "53410fc611922a26e32535c74bb1d9364cef4ecd",
      "name": "Ski Arlberg"
+    }
+   ]
+  },
+  "nauders": {
+   "aspect_rose": {
+    "N": 0.174,
+    "NE": 0.039,
+    "E": 0.013,
+    "SE": 0.022,
+    "S": 0.051,
+    "SW": 0.217,
+    "W": 0.265,
+    "NW": 0.219
+   },
+   "elev_min": 1343,
+   "elev_p05": 1479,
+   "elev_p95": 2597,
+   "elev_max": 2734,
+   "run_km": 48.6,
+   "n_runs": 101,
+   "slope_median": 0.185,
+   "ski_areas": [
+    {
+     "id": "7a6960ef05cec0524f9dbf02ea3a953795963db2",
+     "name": "Stables / Nauders"
+    },
+    {
+     "id": "8ebb23da67e4e5ad4059d78ad442e7694eccfb2f",
+     "name": "Nauders Bergkastel"
     }
    ]
   },
@@ -616,23 +729,35 @@
   },
   "garmisch-classic": {
    "aspect_rose": {
-    "N": 0.173,
-    "NE": 0.314,
-    "E": 0.137,
-    "SE": 0.041,
-    "S": 0.02,
-    "SW": 0.025,
-    "W": 0.123,
-    "NW": 0.168
+    "N": 0.189,
+    "NE": 0.285,
+    "E": 0.124,
+    "SE": 0.04,
+    "S": 0.018,
+    "SW": 0.023,
+    "W": 0.129,
+    "NW": 0.192
    },
-   "elev_min": 727,
-   "elev_p05": 821,
-   "elev_p95": 1843,
+   "elev_min": 677,
+   "elev_p05": 784,
+   "elev_p95": 1836,
    "elev_max": 2047,
-   "run_km": 37.8,
-   "n_runs": 89,
+   "run_km": 42.3,
+   "n_runs": 95,
    "slope_median": 0.178,
    "ski_areas": [
+    {
+     "id": "0b395320dd2d9187318380c69a466cde38e6b708",
+     "name": "Skigebiet Eckbauer"
+    },
+    {
+     "id": "a0a43352599a90fbe97658c404cfd44f3de6c2c5",
+     "name": "Garmisch - Wank"
+    },
+    {
+     "id": "d0832b3ae24f08cb9279ab1c544b41b91b7d4830",
+     "name": "Farchant"
+    },
     {
      "id": "fa473fa12ab6059b9e93af8498afa0efdea2cff6",
      "name": "Skigebiet Garmisch-Classic"
@@ -641,26 +766,34 @@
   },
   "zugspitze": {
    "aspect_rose": {
-    "N": 0.108,
-    "NE": 0.319,
-    "E": 0.299,
-    "SE": 0.13,
-    "S": 0.032,
-    "SW": 0.053,
-    "W": 0.021,
-    "NW": 0.039
+    "N": 0.062,
+    "NE": 0.106,
+    "E": 0.121,
+    "SE": 0.089,
+    "S": 0.094,
+    "SW": 0.184,
+    "W": 0.238,
+    "NW": 0.106
    },
    "elev_min": 995,
-   "elev_p05": 1010,
-   "elev_p95": 2593,
+   "elev_p05": 1018,
+   "elev_p95": 2579,
    "elev_max": 2627,
-   "run_km": 15.7,
-   "n_runs": 23,
-   "slope_median": 0.21,
+   "run_km": 45.3,
+   "n_runs": 71,
+   "slope_median": 0.184,
    "ski_areas": [
+    {
+     "id": "3b83b24cb810ad7699ad3a62b183cf3617da125e",
+     "name": "Ehrwalder Alm"
+    },
     {
      "id": "9e8a091097aeb5af7c87b5f53922e3db043a9849",
      "name": "Gletscher-Skigebiet Zugspitze, Ski resort Zugspitze"
+    },
+    {
+     "id": "f0287cd7d10f61a4bdce90120aa9055593b0f55f",
+     "name": "Skigebiet Ehrwalder Wettersteinbahnen"
     }
    ]
   },
@@ -691,26 +824,38 @@
   },
   "spitzingsee": {
    "aspect_rose": {
-    "N": 0.1,
-    "NE": 0.115,
-    "E": 0.347,
-    "SE": 0.172,
-    "S": 0.028,
-    "SW": 0.07,
-    "W": 0.131,
-    "NW": 0.038
+    "N": 0.089,
+    "NE": 0.102,
+    "E": 0.323,
+    "SE": 0.158,
+    "S": 0.03,
+    "SW": 0.132,
+    "W": 0.125,
+    "NW": 0.041
    },
-   "elev_min": 981,
+   "elev_min": 836,
    "elev_p05": 1045,
-   "elev_p95": 1529,
-   "elev_max": 1569,
-   "run_km": 15.7,
-   "n_runs": 35,
-   "slope_median": 0.188,
+   "elev_p95": 1532,
+   "elev_max": 1597,
+   "run_km": 17.5,
+   "n_runs": 39,
+   "slope_median": 0.19,
    "ski_areas": [
+    {
+     "id": "36373b8117e2d5ddaa54787c3c144570229668d6",
+     "name": "Pfannilift am Schliersee"
+    },
+    {
+     "id": "81a13c1837acb311c196ec167bad7b6bf2277e4a",
+     "name": "Oberer Maxlraineralm"
+    },
     {
      "id": "d98cdd6d5eb28552b22f3a087019c5786531e069",
      "name": "Skigebiet Spitzingsee - Tegernsee"
+    },
+    {
+     "id": "da47bcf768da0893100977990a60a2688f21668c",
+     "name": "Wallbergbahn (Tegernsee)"
     }
    ]
   },
@@ -741,23 +886,31 @@
   },
   "nebelhorn": {
    "aspect_rose": {
-    "N": 0.029,
-    "NE": 0.017,
-    "E": 0.043,
-    "SE": 0.087,
-    "S": 0.21,
-    "SW": 0.271,
-    "W": 0.306,
-    "NW": 0.036
+    "N": 0.1,
+    "NE": 0.119,
+    "E": 0.096,
+    "SE": 0.074,
+    "S": 0.144,
+    "SW": 0.186,
+    "W": 0.217,
+    "NW": 0.064
    },
-   "elev_min": 821,
-   "elev_p05": 831,
-   "elev_p95": 2154,
+   "elev_min": 760,
+   "elev_p05": 784,
+   "elev_p95": 2115,
    "elev_max": 2216,
-   "run_km": 11.6,
-   "n_runs": 17,
-   "slope_median": 0.198,
+   "run_km": 17.0,
+   "n_runs": 30,
+   "slope_median": 0.188,
    "ski_areas": [
+    {
+     "id": "114cdbf035f5c00b8adf003b16d21fd63fbefa1b",
+     "name": "Stinesser"
+    },
+    {
+     "id": "36caeeb99dd1cc8a496f145ee01dbaeb1635545b",
+     "name": "Skigebiet Söllereck"
+    },
     {
      "id": "a4ab6152ad856758bbac95daa5cf3fdd077aea0f",
      "name": "Skigebiet Nebelhorn"
@@ -766,22 +919,22 @@
   },
   "fellhorn": {
    "aspect_rose": {
-    "N": 0.088,
-    "NE": 0.172,
-    "E": 0.217,
-    "SE": 0.174,
-    "S": 0.117,
-    "SW": 0.087,
-    "W": 0.079,
-    "NW": 0.066
+    "N": 0.133,
+    "NE": 0.233,
+    "E": 0.183,
+    "SE": 0.125,
+    "S": 0.108,
+    "SW": 0.064,
+    "W": 0.059,
+    "NW": 0.094
    },
-   "elev_min": 821,
-   "elev_p05": 1061,
-   "elev_p95": 1943,
-   "elev_max": 2216,
-   "run_km": 107.5,
-   "n_runs": 203,
-   "slope_median": 0.192,
+   "elev_min": 916,
+   "elev_p05": 1037,
+   "elev_p95": 1823,
+   "elev_max": 1966,
+   "run_km": 65.9,
+   "n_runs": 144,
+   "slope_median": 0.184,
    "ski_areas": [
     {
      "id": "95d07bbe7b52066bdd3653541ed114ac6d24ca93",
@@ -791,26 +944,38 @@
   },
   "jenner": {
    "aspect_rose": {
-    "N": 0.079,
-    "NE": 0.012,
-    "E": 0.0,
-    "SE": 0.0,
-    "S": 0.0,
-    "SW": 0.0,
-    "W": 0.222,
-    "NW": 0.687
+    "N": 0.3,
+    "NE": 0.084,
+    "E": 0.002,
+    "SE": 0.003,
+    "S": 0.003,
+    "SW": 0.025,
+    "W": 0.283,
+    "NW": 0.299
    },
-   "elev_min": 1081,
-   "elev_p05": 1081,
-   "elev_p95": 1432,
-   "elev_max": 1432,
-   "run_km": 1.1,
-   "n_runs": 1,
-   "slope_median": 0.366,
+   "elev_min": 642,
+   "elev_p05": 805,
+   "elev_p95": 1510,
+   "elev_max": 1537,
+   "run_km": 13.1,
+   "n_runs": 23,
+   "slope_median": 0.174,
    "ski_areas": [
     {
      "id": "4c636189e7311a47d2cbfd4dc2407f2b94bbac2c",
      "name": "Jenner (Berchtesgadener Land)"
+    },
+    {
+     "id": "692ae6af463834954b92e37d77ba93bf96ce3ded",
+     "name": "Grünsteinlift (Berchtesgaden)"
+    },
+    {
+     "id": "8394e228c6499b01b1159b31d00a9347ead9499e",
+     "name": "Rossfeld"
+    },
+    {
+     "id": "b13efc3ad48d6d299143628b0876ec32c29e0f0e",
+     "name": "Obersalzberg"
     }
    ]
   },
@@ -866,26 +1031,30 @@
   },
   "kitzsteinhorn": {
    "aspect_rose": {
-    "N": 0.248,
-    "NE": 0.401,
-    "E": 0.194,
-    "SE": 0.026,
-    "S": 0.012,
-    "SW": 0.007,
-    "W": 0.015,
-    "NW": 0.096
+    "N": 0.299,
+    "NE": 0.333,
+    "E": 0.148,
+    "SE": 0.044,
+    "S": 0.024,
+    "SW": 0.011,
+    "W": 0.019,
+    "NW": 0.122
    },
-   "elev_min": 764,
-   "elev_p05": 1118,
-   "elev_p95": 2894,
+   "elev_min": 1398,
+   "elev_p05": 1534,
+   "elev_p95": 2866,
    "elev_max": 3024,
-   "run_km": 45.3,
-   "n_runs": 79,
-   "slope_median": 0.2,
+   "run_km": 47.8,
+   "n_runs": 89,
+   "slope_median": 0.205,
    "ski_areas": [
     {
      "id": "bc0361849d0e6e33ef5d9cd035522200a3125df1",
      "name": "Kaprun - Kitzsteinhorn/Maiskogel"
+    },
+    {
+     "id": "ce27bffab42bb84f428aa6a5f1e3b3889536dc6b",
+     "name": "Weißsee Gletscherwelt"
     }
    ]
   },
@@ -916,30 +1085,38 @@
   },
   "snow-space": {
    "aspect_rose": {
-    "N": 0.19,
-    "NE": 0.202,
-    "E": 0.136,
-    "SE": 0.069,
-    "S": 0.055,
-    "SW": 0.072,
-    "W": 0.125,
-    "NW": 0.151
+    "N": 0.145,
+    "NE": 0.213,
+    "E": 0.164,
+    "SE": 0.081,
+    "S": 0.059,
+    "SW": 0.08,
+    "W": 0.143,
+    "NW": 0.115
    },
    "elev_min": 667,
-   "elev_p05": 916,
-   "elev_p95": 1944,
-   "elev_max": 2644,
-   "run_km": 597.8,
-   "n_runs": 1016,
-   "slope_median": 0.166,
+   "elev_p05": 962,
+   "elev_p95": 1877,
+   "elev_max": 2015,
+   "run_km": 131.6,
+   "n_runs": 260,
+   "slope_median": 0.188,
    "ski_areas": [
-    {
-     "id": "53a8bb068ae7f82160a4c6e2df63ee3a724b62dd",
-     "name": "Ski amadé"
-    },
     {
      "id": "71c073dc36516a01f114c98708db04e208feafd1",
      "name": "Flachau"
+    },
+    {
+     "id": "7346bb5d22b8259e978183dc0a4b375a3351ac90",
+     "name": "Wagrain"
+    },
+    {
+     "id": "95848269aacfc4191f8a095cf2978473cf6ea49d",
+     "name": "Shuttleberg Flachauwinkl-Kleinarl"
+    },
+    {
+     "id": "c1bb41346278aa404c3e62769608553e1d22d149",
+     "name": "Zauchensee-Flachauwinkl"
     },
     {
      "id": "ebc3833ff7fe9a3a6978c81bac56683ecae63cd2",
@@ -949,26 +1126,30 @@
   },
   "zauchensee": {
    "aspect_rose": {
-    "N": 0.0,
-    "NE": 0.106,
-    "E": 0.846,
-    "SE": 0.048,
-    "S": 0.0,
-    "SW": 0.0,
-    "W": 0.0,
-    "NW": 0.0
+    "N": 0.128,
+    "NE": 0.141,
+    "E": 0.215,
+    "SE": 0.175,
+    "S": 0.093,
+    "SW": 0.062,
+    "W": 0.09,
+    "NW": 0.096
    },
-   "elev_min": 1762,
-   "elev_p05": 1762,
-   "elev_p95": 1832,
-   "elev_max": 1833,
-   "run_km": 0.3,
-   "n_runs": 1,
-   "slope_median": 0.293,
+   "elev_min": 1009,
+   "elev_p05": 1142,
+   "elev_p95": 1982,
+   "elev_max": 2109,
+   "run_km": 41.4,
+   "n_runs": 80,
+   "slope_median": 0.193,
    "ski_areas": [
     {
-     "id": "fca360c4-4b44-4046-a69b-29bf0f176596",
-     "name": null
+     "id": "95848269aacfc4191f8a095cf2978473cf6ea49d",
+     "name": "Shuttleberg Flachauwinkl-Kleinarl"
+    },
+    {
+     "id": "c1bb41346278aa404c3e62769608553e1d22d149",
+     "name": "Zauchensee-Flachauwinkl"
     }
    ]
   },
@@ -994,31 +1175,43 @@
     {
      "id": "b28af962323890eb2dc4f2705ed7b6893d894add",
      "name": "Obertauern"
+    },
+    {
+     "id": "fca360c4-4b44-4046-a69b-29bf0f176596",
+     "name": null
     }
    ]
   },
   "gastein": {
    "aspect_rose": {
-    "N": 0.154,
-    "NE": 0.103,
-    "E": 0.018,
-    "SE": 0.004,
-    "S": 0.015,
-    "SW": 0.165,
-    "W": 0.27,
-    "NW": 0.271
+    "N": 0.18,
+    "NE": 0.196,
+    "E": 0.142,
+    "SE": 0.097,
+    "S": 0.083,
+    "SW": 0.077,
+    "W": 0.088,
+    "NW": 0.136
    },
-   "elev_min": 1076,
-   "elev_p05": 1122,
-   "elev_p95": 1950,
-   "elev_max": 2006,
-   "run_km": 9.9,
-   "n_runs": 9,
-   "slope_median": 0.167,
+   "elev_min": 843,
+   "elev_p05": 1174,
+   "elev_p95": 2238,
+   "elev_max": 2644,
+   "run_km": 88.7,
+   "n_runs": 96,
+   "slope_median": 0.165,
    "ski_areas": [
     {
-     "id": "44685c49517f5a52c35d765c5defd207be75edbf",
-     "name": "Graukogel"
+     "id": "8ebbe708c3f7b24aac9cd9d3293dc3b53d405f92",
+     "name": "Ski Gastein - Schlossalm/Angertal/Stubnerkogel"
+    },
+    {
+     "id": "b6b13fdcf2309d393d1de3f774fa865e4f351ade",
+     "name": "Sportgastein"
+    },
+    {
+     "id": "fc89413ef26e4479473070112eb1e72e15b3d23f",
+     "name": "Großarltal-Dorfgastein"
     }
    ]
   }
