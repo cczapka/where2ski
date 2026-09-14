@@ -1,0 +1,89 @@
+name: release
+
+on:
+  workflow_dispatch:
+    inputs:
+      notes:
+        description: "Extra notes to add to the release"
+        required: false
+        default: ""
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Build and test the app
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon :app:assembleDebug :app:testDebugUnitTest
+
+      - name: Name the build
+        id: name
+        run: |
+          version=$(grep -oP 'versionName = "\K[^"]+' android/app/build.gradle.kts)
+          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            tag="${GITHUB_REF_NAME}"
+          else
+            tag="v${version}-build.${GITHUB_RUN_NUMBER}"
+          fi
+          apk="where2ski-${tag}.apk"
+          cp android/app/build/outputs/apk/debug/app-debug.apk "$apk"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "apk=$apk" >> "$GITHUB_OUTPUT"
+          ls -l "$apk"
+
+      - name: Write release notes
+        run: |
+          cat > notes.md <<'NOTES'
+          Android app for the where2ski ski-conditions ranking.
+
+          ## Install on a phone
+
+          1. Download the `.apk` below (tap it on the phone; no GitHub login needed).
+          2. Open it. Android asks to allow installing unknown apps for your browser
+             or file manager once; allow it, then install.
+          3. Play Protect may warn that the developer is unknown, because this is a
+             debug-signed build. Installing anyway is safe for your own build.
+
+          Needs Android 8.0 or newer. Later builds install over this one without
+          uninstalling, because they share the same signing key.
+
+          ## What it does
+
+          Ranks ski resorts around Munich for Freeride or Piste days from an open
+          data pipeline that runs every three hours: snow and weather forecasts,
+          station measurements, avalanche bulletins, per-aspect snow quality and
+          road conditions on the drive. Out of season every resort is reported as
+          closed, which is the honest answer rather than a bug.
+          NOTES
+          if [ -n "${{ inputs.notes }}" ]; then
+            printf '\n## Notes\n\n%s\n' "${{ inputs.notes }}" >> notes.md
+          fi
+          printf '\nBuilt from commit %s.\n' "${GITHUB_SHA}" >> notes.md
+
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ steps.name.outputs.tag }}" "${{ steps.name.outputs.apk }}" \
+            --repo "${GITHUB_REPOSITORY}" \
+            --target "${GITHUB_SHA}" \
+            --title "where2ski ${{ steps.name.outputs.tag }}" \
+            --notes-file notes.md
+          echo "Release: https://github.com/${GITHUB_REPOSITORY}/releases/tag/${{ steps.name.outputs.tag }}"

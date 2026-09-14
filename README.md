@@ -71,10 +71,16 @@ workflow run.
 
 Open `android/` in Android Studio, or build with `./gradlew :app:assembleDebug`.
 
-To try it without a build: open the latest successful run of the `android`
-workflow on GitHub, download the `where2ski-debug-apk` artifact, unzip it and
-install the APK on the phone (installation from unknown sources must be
-allowed once). The debug build is unsigned for stores but fine for personal use.
+To try it without a build, install the latest APK from
+[Releases](https://github.com/cczapka/where2ski/releases): tap the `.apk` on the
+phone, allow installing unknown apps once, and install. Android 8.0 or newer.
+Play Protect warns that the developer is unknown because the build is
+debug-signed; the signing key is stable, so a newer build installs over an older
+one without uninstalling first.
+
+Releases are produced by the `release` workflow, either on demand or by pushing
+a `v*` tag. Every push also attaches an APK to the `android` workflow run, but
+that one comes as a zip and needs a GitHub login.
 
 ## Data sources and attribution
 

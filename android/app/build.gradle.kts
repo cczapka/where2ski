@@ -20,6 +20,19 @@ android {
         buildConfigField("String", "DATA_BASE_URL", "\"https://cczapka.github.io/where2ski/\"")
     }
 
+    signingConfigs {
+        // A keystore checked into the repository, with the standard public debug
+        // credentials. It is not a secret: its only job is to keep the signature
+        // stable across CI machines so a new build installs over the previous one
+        // instead of being rejected for a signature mismatch.
+        getByName("debug") {
+            storeFile = file("debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
