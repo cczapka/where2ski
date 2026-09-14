@@ -312,7 +312,12 @@ gives you a personal weight fit and a sanity check on the thresholds above.
    (polygon, aspect, elevation, hazard notes) — the model already works per
    aspect class, so a hand-drawn zone plugs straight in.
 
-This is offline preprocessing, so the phone never touches a DEM.
+This is offline preprocessing, so the phone never touches a DEM. Implemented
+in `pipeline/tools/terrain.py`: OpenSkiData already carries elevations on the
+run coordinates, so no separate DEM is needed; the downhill direction of every
+segment is taken from the elevation difference, and segments flatter than 3 %
+are ignored. A resort can pin its OpenSkiMap area ids with
+`links.openskimap_ids` in the registry when the automatic match is wrong.
 
 ---
 
@@ -446,10 +451,22 @@ ever reads static JSON.
   factor), resort coordinates and elevations are approximate, Bavarian and
   Salzburg station coverage depends on what the EAWS feed carries.
 
-**Phase 2 – snow quality and safety**
-- Daily station history, snow-state machine (§4), aspect roses from
-  OpenSkiData, CAAML bulletins with problem-aspect capping, confidence.
-- Badges, "why" panel.
+**Phase 2 – snow quality and safety** (implemented)
+- Aspect roses: `pipeline/tools/terrain.py` streams OpenSkiData runs,
+  matches them to resorts through the OpenSkiMap ski-area polygons and writes
+  `pipeline/data/terrain.json` (8-sector rose, run km, elevation percentiles).
+  The `terrain` workflow runs it on demand and commits the result.
+- Per-aspect snow states: every day is assessed for all eight sectors with a
+  seasonal sun factor (north faces get almost no sun in mid-winter, more from
+  March on) and aggregated with the rose: freeride = 70 % weighted mean plus
+  30 % of the best sector holding at least 15 % of the terrain; piste = plain
+  weighted mean. Aspects named by an avalanche problem in the bulletin are
+  capped at 0.2 for freeride.
+- Station time series: the EAWS feed links a SMET file per station; the
+  pipeline reads the last days of snow-surface temperature (falling back to
+  air temperature) and uses them for melt hours, overnight refreeze and
+  melt-freeze cycles instead of the model temperature.
+- The app shows the rose, the best aspect and the station used.
 
 **Phase 3 – personalisation and comfort**
 - Post-trip rating and weight calibration, notifications and widget,

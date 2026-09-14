@@ -40,7 +40,12 @@ python -m where2ski_pipeline run --out out -v   # live run, writes out/latest.js
 ```
 
 `latest.json` holds, per resort and day, the factor values, both scores,
-blockers, badges, the snow assessment, weather summary and avalanche info.
+blockers, badges, the snow assessment (overall and per aspect sector), weather
+summary and avalanche info.
+
+Terrain data (aspect roses, run lengths, elevation percentiles per resort) is
+derived from OpenSkiData with `python -m tools.terrain` and stored in
+`pipeline/data/terrain.json`; the `terrain` workflow rebuilds it on demand.
 `resorts.json` is the static registry (`pipeline/data/resorts.json`).
 The GitHub Actions workflow runs the pipeline every three hours in season and
 publishes the output to GitHub Pages at

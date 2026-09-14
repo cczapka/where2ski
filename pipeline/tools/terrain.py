@@ -81,7 +81,7 @@ def geometry_centroid(geom: dict) -> tuple[float, float] | None:
         pts = coords
     if not pts:
         return None
-    return sum(p[1] for p in pts) / len(pts), sum(p[0] for p in pts) / len(pts)
+    return sum(float(p[1]) for p in pts) / len(pts), sum(float(p[0]) for p in pts) / len(pts)
 
 
 def match_ski_areas(resorts, ski_areas_path: Path, max_km: float) -> dict[str, list[dict]]:
@@ -90,7 +90,7 @@ def match_ski_areas(resorts, ski_areas_path: Path, max_km: float) -> dict[str, l
     nearest: dict[str, tuple[float, dict]] = {}
     n = 0
     with ski_areas_path.open("rb") as f:
-        for feature in ijson.items(f, "features.item"):
+        for feature in ijson.items(f, "features.item", use_float=True):
             n += 1
             props = feature.get("properties") or {}
             if "downhill" not in (props.get("activities") or []):
@@ -184,7 +184,7 @@ def build(registry: Path, out: Path, cache: Path, max_km: float, runs_url: str, 
     n = kept = 0
     t0 = time.time()
     with runs_path.open("rb") as f:
-        for feature in ijson.items(f, "features.item"):
+        for feature in ijson.items(f, "features.item", use_float=True):
             n += 1
             geom = feature.get("geometry") or {}
             if geom.get("type") != "LineString":
