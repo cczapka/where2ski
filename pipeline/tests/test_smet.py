@@ -1,6 +1,9 @@
 from datetime import datetime
 
-from where2ski_pipeline.sources.smet import parse_smet
+import gzip
+import json
+
+from where2ski_pipeline.sources.smet import parse_geosphere, parse_history, parse_smet
 
 SMET = """SMET 1.1 ASCII
 [HEADER]
@@ -40,3 +43,26 @@ def test_parse_smet_units_and_hourly():
 def test_parse_smet_ignores_bad_rows():
     h = parse_smet(SMET + "garbage line\n2026-01-15T12:00:00Z 1 2\n")
     assert len(h.times) == 5
+
+
+def test_parse_history_detects_gzip_and_smet():
+    h = parse_history(gzip.compress(SMET.encode()), station="gz")
+    assert h is not None and len(h.times) == 5 and h.station == "gz"
+    assert parse_history(b"<html>not data</html>") is None
+
+
+def test_parse_geosphere_timeseries():
+    data = {
+        "type": "FeatureCollection",
+        "timestamps": ["2026-01-15T05:00:00+00:00", "2026-01-15T05:10:00+00:00", "2026-01-15T11:00:00+00:00"],
+        "features": [{"type": "Feature", "properties": {"station": "11149", "parameters": {
+            "TL": {"name": "Lufttemperatur", "unit": "°C", "data": [-8.0, -8.2, 1.5]},
+            "SCHNEE": {"name": "Schneehöhe", "unit": "cm", "data": [120, 120, None]},
+        }}}],
+    }
+    h = parse_history(json.dumps(data).encode())
+    assert h is not None and h.station == "11149"
+    assert h.values["TA"] == [-8.0, -8.2, 1.5] and h.values["HS"][2] is None
+    six = h.hourly[datetime(2026, 1, 15, 6, 0)]
+    assert abs(six["ta"] - (-8.1)) < 1e-9 and six["tss"] is None and six["hs"] == 120
+    assert parse_geosphere({"timestamps": [], "features": []}).times == []

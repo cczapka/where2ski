@@ -6,6 +6,8 @@ import json
 from dataclasses import dataclass, field
 from pathlib import Path
 
+MIN_TERRAIN_KM = 5.0  # below this the OpenStreetMap coverage is too thin for a meaningful aspect rose
+
 
 @dataclass
 class Resort:
@@ -93,7 +95,9 @@ def load_resorts(path: Path, terrain_path: Path | None = None) -> list[Resort]:
         t = terrain.get(item["id"])
         if t:
             resorts[-1].terrain = {k: v for k, v in t.items() if k != "aspect_rose"}
-            if resorts[-1].aspect_rose is None and t.get("aspect_rose"):
+            enough = float(t.get("run_km") or 0.0) >= MIN_TERRAIN_KM
+            resorts[-1].terrain["rose_used"] = enough
+            if resorts[-1].aspect_rose is None and t.get("aspect_rose") and enough:
                 resorts[-1].aspect_rose = t["aspect_rose"]
     ids = [r.id for r in resorts]
     if len(ids) != len(set(ids)):

@@ -56,7 +56,10 @@ def assess_resort(resort: Resort, http: Http, today: date, days: list[date], sta
 
     micro = resort.micro_region or find_micro_region(micro_features.get(resort.region, []), resort.lat, resort.lon)
     if micro is None and mapped:
-        micro = next((m.station.micro_region for m in mapped if m.station.micro_region), None)
+        raw = next((m.station.micro_region for m in mapped if m.station.micro_region), None)
+        micro = raw.split()[0] if raw else None  # station feed carries "AT-07-16 Tuxer Alpen Ost"
+    # a resort on a border may sit in a micro-region of the neighbouring warning service
+    bulletin_region = micro[:5] if micro and micro[:5] in bulletins_by_day else resort.region
     has_bulletin = False
 
     out_days = []
@@ -66,10 +69,10 @@ def assess_resort(resort: Resort, http: Http, today: date, days: list[date], sta
         bulletin = None
         flagged: set[str] = set()
         if micro and lead <= 1:
-            for_day = bulletins_by_day.get(resort.region, {}).get(day.isoformat()) or {}
+            for_day = bulletins_by_day.get(bulletin_region, {}).get(day.isoformat()) or {}
             bulletin = for_day.get(micro)
             if bulletin is None and lead == 1:
-                bulletin = (bulletins_by_day.get(resort.region, {}).get(today.isoformat()) or {}).get(micro)
+                bulletin = (bulletins_by_day.get(bulletin_region, {}).get(today.isoformat()) or {}).get(micro)
         if bulletin is not None:
             has_bulletin = True
             for p in bulletin.problems_at(resort.top) + bulletin.problems_at(resort.mid):

@@ -84,10 +84,37 @@ def geometry_centroid(geom: dict) -> tuple[float, float] | None:
     return sum(float(p[1]) for p in pts) / len(pts), sum(float(p[0]) for p in pts) / len(pts)
 
 
+def _bbox_area(geom: dict) -> float:
+    pts = []
+    gtype, coords = geom.get("type"), geom.get("coordinates") or []
+    if gtype == "Polygon":
+        pts = coords[0]
+    elif gtype == "MultiPolygon":
+        pts = [p for poly in coords for p in poly[0]]
+    if not pts:
+        return 0.0
+    lons = [float(p[0]) for p in pts]
+    lats = [float(p[1]) for p in pts]
+    return (max(lons) - min(lons)) * (max(lats) - min(lats))
+
+
+def _overrides(resort) -> tuple[list[str], list[str]]:
+    links = resort.links if isinstance(resort.links, dict) else {}
+    return list(links.get("openskimap_ids") or []), [str(n).lower() for n in (links.get("openskimap_names") or [])]
+
+
 def match_ski_areas(resorts, ski_areas_path: Path, max_km: float) -> dict[str, list[dict]]:
-    """resort id -> list of ski-area dicts {id, name}; point-in-polygon first, else nearest centroid."""
-    matched: dict[str, list[dict]] = defaultdict(list)
-    nearest: dict[str, tuple[float, dict]] = {}
+    """resort id -> ski areas to take runs from.
+
+    Order of preference: explicit ids or name substrings from the registry
+    (``links.openskimap_ids`` / ``links.openskimap_names``), then the smallest
+    ski-area polygon containing the resort point (so a sub-resort is not
+    swallowed by an umbrella area such as "Stubai" or "Ski amadé"), then all
+    downhill areas whose centroid lies within ``max_km``.
+    """
+    containing: dict[str, list[tuple[float, dict]]] = defaultdict(list)
+    nearby: dict[str, list[dict]] = defaultdict(list)
+    by_name: dict[str, list[dict]] = defaultdict(list)
     n = 0
     with ski_areas_path.open("rb") as f:
         for feature in ijson.items(f, "features.item", use_float=True):
@@ -97,22 +124,34 @@ def match_ski_areas(resorts, ski_areas_path: Path, max_km: float) -> dict[str, l
                 continue
             geom = feature.get("geometry") or {}
             info = {"id": props.get("id"), "name": props.get("name")}
+            name_l = (props.get("name") or "").lower()
             centroid = geometry_centroid(geom)
             for r in resorts:
+                ids, names = _overrides(r)
+                if info["id"] in ids or any(nm and nm in name_l for nm in names):
+                    by_name[r.id].append(info)
+                    continue
                 if geom.get("type") in ("Polygon", "MultiPolygon") and point_in_geometry(r.lon, r.lat, geom):
-                    matched[r.id].append(info)
-                elif centroid is not None:
-                    d = haversine_km(r.lat, r.lon, centroid[0], centroid[1])
-                    if d <= max_km and (r.id not in nearest or d < nearest[r.id][0]):
-                        nearest[r.id] = (d, info)
+                    containing[r.id].append((_bbox_area(geom), info))
+                elif centroid is not None and haversine_km(r.lat, r.lon, centroid[0], centroid[1]) <= max_km:
+                    nearby[r.id].append(info)
     log.info("scanned %d ski areas", n)
+    matched: dict[str, list[dict]] = {}
     for r in resorts:
-        override = (r.links or {}).get("openskimap_ids") if isinstance(r.links, dict) else None
-        if override:
-            matched[r.id] = [{"id": i, "name": None} for i in override]
-        elif not matched[r.id] and r.id in nearest:
-            matched[r.id] = [nearest[r.id][1]]
-            log.info("%s: no containing ski area, using nearest '%s' (%.1f km)", r.id, nearest[r.id][1]["name"], nearest[r.id][0])
+        if by_name.get(r.id):
+            matched[r.id] = by_name[r.id]
+            how = "override"
+        elif containing.get(r.id):
+            smallest = min(containing[r.id], key=lambda x: x[0])
+            matched[r.id] = [smallest[1]]
+            how = f"smallest of {len(containing[r.id])} containing"
+        elif nearby.get(r.id):
+            matched[r.id] = nearby[r.id]
+            how = f"{len(nearby[r.id])} nearby"
+        else:
+            matched[r.id] = []
+            how = "NO MATCH (radius fallback on runs)"
+        log.info("%s -> %s (%s)", r.id, [a.get("name") or a.get("id") for a in matched[r.id]], how)
     return matched
 
 
@@ -175,12 +214,14 @@ def build(registry: Path, out: Path, cache: Path, max_km: float, runs_url: str, 
         for a in areas:
             if a.get("id"):
                 area_to_resorts[a["id"]].append(rid)
-    for r in resorts:
-        log.info("%s -> %s", r.id, [a.get("name") or a.get("id") for a in matched.get(r.id, [])] or "NO MATCH (radius fallback)")
-
     runs_path = download(runs_url, cache / "runs.geojson")
     acc = {r.id: Accumulator() for r in resorts}
+    by_id = {r.id: r for r in resorts}
     unmatched = [r for r in resorts if not matched.get(r.id)]
+
+    def radius(r) -> float:
+        links = r.links if isinstance(r.links, dict) else {}
+        return float(links.get("radius_km") or max_km)
     n = kept = 0
     t0 = time.time()
     with runs_path.open("rb") as f:
@@ -200,12 +241,16 @@ def build(registry: Path, out: Path, cache: Path, max_km: float, runs_url: str, 
                 for rid in area_to_resorts.get(sid, []):
                     targets.add(rid)
             coords = geom.get("coordinates") or []
-            if unmatched and coords:
-                lat, lon = float(coords[0][1]), float(coords[0][0])
-                for r in unmatched:
-                    if haversine_km(r.lat, r.lon, lat, lon) <= max_km:
-                        targets.add(r.id)
+            if not coords:
+                continue
+            lat, lon = float(coords[0][1]), float(coords[0][0])
+            for r in unmatched:
+                if haversine_km(r.lat, r.lon, lat, lon) <= radius(r):
+                    targets.add(r.id)
             for rid in targets:
+                r = by_id[rid]
+                if haversine_km(r.lat, r.lon, lat, lon) > radius(r):
+                    continue  # part of an umbrella area but far from this resort
                 acc[rid].add_run(coords, props.get("name"))
                 kept += 1
             if n % 100000 == 0:
@@ -241,7 +286,7 @@ def main(argv=None) -> int:
     ap.add_argument("--registry", default="data/resorts.json")
     ap.add_argument("--out", default="data/terrain.json")
     ap.add_argument("--cache", default="cache/terrain")
-    ap.add_argument("--max-km", type=float, default=6.0)
+    ap.add_argument("--max-km", type=float, default=8.0)
     ap.add_argument("--runs-url", default=RUNS_URL)
     ap.add_argument("--ski-areas-url", default=SKI_AREAS_URL)
     args = ap.parse_args(argv)

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import gzip
+import json
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
@@ -114,20 +116,76 @@ def parse_smet(text: str, station: str = "") -> StationHistory:
     return hist
 
 
+def parse_geosphere(data: dict, station: str = "") -> StationHistory:
+    """GeoSphere Austria dataset API GeoJSON time series (TAWES): TL in °C, SCHNEE in cm, no surface temperature."""
+    hist = StationHistory(station=station)
+    stamps = data.get("timestamps") or []
+    features = data.get("features") or []
+    if not stamps or not features:
+        return hist
+    params = (features[0].get("properties") or {}).get("parameters") or {}
+    if not hist.station:
+        hist.station = str((features[0].get("properties") or {}).get("station") or "")
+
+    def column(*names):
+        for n in names:
+            block = params.get(n)
+            if isinstance(block, dict) and isinstance(block.get("data"), list):
+                return block["data"]
+        return None
+
+    ta = column("TL", "TA")
+    hs = column("SCHNEE", "SH", "HS")
+    for i, stamp in enumerate(stamps):
+        try:
+            t = datetime.fromisoformat(str(stamp).replace("Z", "+00:00"))
+        except ValueError:
+            continue
+        if t.tzinfo is None:
+            t = t.replace(tzinfo=timezone.utc)
+        hist.times.append(t.astimezone(LOCAL_TZ).replace(tzinfo=None))
+        for name, col in (("TA", ta), ("HS", hs)):
+            if col is not None:
+                v = col[i] if i < len(col) else None
+                hist.values.setdefault(name, []).append(float(v) if isinstance(v, (int, float)) else None)
+    hist.build_hourly()
+    return hist
+
+
+def parse_history(raw: bytes, station: str = "") -> StationHistory | None:
+    """Detect gzip, SMET or GeoSphere JSON and parse accordingly."""
+    if raw[:2] == b"\x1f\x8b":
+        try:
+            raw = gzip.decompress(raw)
+        except OSError as exc:
+            log.warning("station history: gzip failed: %s", exc)
+            return None
+    text = raw.decode("utf-8", errors="replace")
+    head = text.lstrip()[:40]
+    if head.startswith("SMET"):
+        return parse_smet(text, station=station)
+    if head.startswith("{"):
+        try:
+            data = json.loads(text)
+        except ValueError:
+            return None
+        if isinstance(data, dict) and "timestamps" in data:
+            return parse_geosphere(data, station=station)
+    log.warning("station history: unknown format (starts with %r)", head)
+    return None
+
+
 def fetch_history(http: Http, station, ttl_s: float = 3600) -> StationHistory | None:
     urls = getattr(station, "data_urls", None) or []
     for url in urls[:1]:
-        key = "smet_" + "".join(ch if ch.isalnum() else "_" for ch in url)[-80:]
+        key = "history_" + "".join(ch if ch.isalnum() else "_" for ch in url)[-80:]
         try:
-            text = http.get_text(url, key=key, ttl_s=ttl_s)
+            raw = http.get_bytes(url, key=key, ttl_s=ttl_s)
         except Exception as exc:  # noqa: BLE001
             log.warning("station history %s failed: %s", url, exc)
             return None
-        if not text.lstrip().startswith("SMET"):
-            log.warning("station history %s is not SMET (starts with %r)", url, text[:40])
-            return None
-        hist = parse_smet(text, station=getattr(station, "name", ""))
-        if not hist.times:
+        hist = parse_history(raw, station=getattr(station, "name", ""))
+        if hist is None or not hist.times:
             return None
         return hist
     return None

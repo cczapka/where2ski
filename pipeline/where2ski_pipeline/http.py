@@ -56,5 +56,24 @@ class Http:
             cache_path.write_text(text, encoding="utf-8")
         return text
 
+    def get_bytes(self, url: str, key: str, ttl_s: float = 0, params: dict | None = None) -> bytes:
+        """Like get_text but returns the raw body (needed for gzip files served without Content-Encoding)."""
+        if self.offline_dir is not None:
+            path = self.offline_dir / self._safe(key)
+            if not path.exists():
+                raise FileNotFoundError(f"offline fixture missing: {path}")
+            return path.read_bytes()
+        cache_path = self.cache_dir / (self._safe(key) + ".bin") if self.cache_dir else None
+        if cache_path and ttl_s > 0 and cache_path.exists():
+            if time.time() - cache_path.stat().st_mtime < ttl_s:
+                return cache_path.read_bytes()
+        log.info("GET %s", url)
+        resp = self.session.get(url, params=params, timeout=self.timeout)
+        resp.raise_for_status()
+        data = resp.content
+        if cache_path and ttl_s > 0:
+            cache_path.write_bytes(data)
+        return data
+
     def get_json(self, url: str, key: str, ttl_s: float = 0, params: dict | None = None):
         return json.loads(self.get_text(url, key, ttl_s=ttl_s, params=params))
