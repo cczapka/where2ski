@@ -17,6 +17,7 @@ from .registry import Resort, load_resorts
 from .sources.bulletin import fetch_bulletins, fetch_micro_regions, find_micro_region
 from .sources.holidays import crowd_factor, fetch_holidays
 from .sources.openmeteo import fetch_resort_forecast
+from .sources.route import fetch_road_points, road_factor, road_report, waypoints_for
 from .sources.smet import fetch_history
 from .sources.stations import load_stations, map_stations, weighted
 
@@ -40,13 +41,15 @@ def is_open(resort: Resort, day: date) -> bool:
 
 
 def assess_resort(resort: Resort, http: Http, today: date, days: list[date], stations, bulletins_by_day,
-                  micro_features, holidays) -> dict:
+                  micro_features, holidays, road_points=None) -> dict:
     series = fetch_resort_forecast(http, resort)
     base, mid, top = series["base"], series["mid"], series["top"]
 
     mapped = map_stations(resort, stations)
     station_hs = weighted(mapped, "hs")
     station_hn = {k: weighted(mapped, k) for k in ("hn24", "hn48", "hn72")} if mapped else None
+    my_waypoints = waypoints_for(resort)
+    my_roads = [road_points[w[0]] for w in my_waypoints if road_points and w[0] in road_points]
     history = None
     for m in mapped:
         if m.station.data_urls:
@@ -94,7 +97,9 @@ def assess_resort(resort: Resort, http: Http, today: date, days: list[date], sta
         weather = day_weather(base, mid, top, day)
         level = max([lv for lv in (level_mid, level_top) if lv is not None], default=None)
         crowd = crowd_factor(day, holidays)
-        factors = scoring.build_factors(snow, weather, level, resort.travel_min, crowd)
+        roads = road_report(my_roads, day) if my_roads else None
+        factors = scoring.build_factors(snow, weather, level, resort.travel_min, crowd,
+                                        road_factor(roads, expected=bool(my_waypoints)))
         opened = is_open(resort, day)
         blk = {m: scoring.blockers(m, snow, weather, level, opened) for m in ("freeride", "piste")}
         scores = {m: (0.0 if blk[m] else scoring.score(m, factors)) for m in ("freeride", "piste")}
@@ -109,6 +114,7 @@ def assess_resort(resort: Resort, http: Http, today: date, days: list[date], sta
             "snow": snow.public(),
             "weather": weather.public(),
             "avalanche": avalanche,
+            "roads": roads,
         })
 
     result = resort.public()
@@ -160,10 +166,18 @@ def run(registry: Path, out_dir: Path, cache_dir: Path | None = None, offline_di
     holidays, h_status = fetch_holidays(http, days[0], days[-1])
     status["sources"]["holidays"] = h_status
 
+    try:
+        road_points = fetch_road_points(http, resorts)
+    except Exception as exc:  # noqa: BLE001
+        log.warning("road forecast unavailable: %s", exc)
+        road_points = {}
+    status["sources"]["roads"] = {"waypoints": sorted(road_points)}
+
     results = []
     for resort in resorts:
         try:
-            results.append(assess_resort(resort, http, today, days, stations, bulletins_by_day, micro_features, holidays))
+            results.append(assess_resort(resort, http, today, days, stations, bulletins_by_day, micro_features,
+                                         holidays, road_points))
             if results[-1].get("station_history"):
                 status["sources"]["station_history"] = status["sources"].get("station_history", 0) + 1
         except Exception as exc:  # noqa: BLE001

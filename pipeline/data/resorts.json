@@ -1,5 +1,5 @@
 {
- "_comment": "season is optional (\"MM-DD\" open/close, may wrap the year); defaults are Dec 1 – Apr 15, glaciers Oct 1 – May 31. Curated registry of major resorts reachable from Munich. Coordinates and elevations are approximate (resort centre / lift base, typical mid-mountain, highest lift) and should be refined. travel_min is an approximate winter driving time from Munich. Elevations in metres. links.radius_km (default 8) limits which OpenSkiMap runs count for a resort; links.openskimap_names / openskimap_ids pin the ski areas used by the terrain tool.",
+ "_comment": "season is optional (\"MM-DD\" open/close, may wrap the year); defaults are Dec 1 – Apr 15, glaciers Oct 1 – May 31. Curated registry of major resorts reachable from Munich. Coordinates and elevations are approximate (resort centre / lift base, typical mid-mountain, highest lift) and should be refined. travel_min is an approximate winter driving time from Munich. Elevations in metres. links.radius_km (default 8) limits which OpenSkiMap runs count for a resort; links.openskimap_names / openskimap_ids pin the ski areas used by the terrain tool. links.road_waypoints pins the road passes used for the drive-conditions factor.",
  "resorts": [
   {
    "id": "skiwelt",
@@ -118,7 +118,12 @@
     "snowcard_tirol"
    ],
    "travel_min": 85,
-   "links": {}
+   "links": {
+    "road_waypoints": [
+     "Inntal / Kufstein",
+     "Achenpass"
+    ]
+   }
   },
   {
    "id": "zillertal-arena",
@@ -157,7 +162,11 @@
    "travel_min": 100,
    "links": {
     "bergfex": "https://www.bergfex.at/hochfuegen/",
-    "radius_km": 10
+    "radius_km": 10,
+    "road_waypoints": [
+     "Inntal / Kufstein",
+     "Achenpass"
+    ]
    }
   },
   {
@@ -176,7 +185,11 @@
    ],
    "travel_min": 110,
    "links": {
-    "radius_km": 10
+    "radius_km": 10,
+    "road_waypoints": [
+     "Inntal / Kufstein",
+     "Achenpass"
+    ]
    }
   },
   {
@@ -677,7 +690,8 @@
     "radius_km": 4,
     "openskimap_names": [
      "Jenner"
-    ]
+    ],
+    "road_waypoints": []
    }
   },
   {

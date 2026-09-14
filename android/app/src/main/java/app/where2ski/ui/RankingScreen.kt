@@ -129,6 +129,7 @@ private fun RankingCard(item: RankedResort, mode: Mode, onClick: () -> Unit) {
                     d.weather.gustMaxTop?.let { append(" · gusts ${it.toInt()} km/h") }
                     d.avalanche?.levelTop?.let { append(" · danger $it") }
                     item.resort.travelMin?.let { append(" · ${it} min") }
+                    d.roads?.takeIf { it.snowfallCm >= 3.0 }?.let { append(" · ${it.waypoint}: ${it.snowfallCm.toInt()} cm") }
                 }
                 Text(line2, style = MaterialTheme.typography.bodySmall)
                 if (blockers.isNotEmpty()) {

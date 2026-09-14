@@ -134,6 +134,14 @@ def offline_dir(tmp_path):
         "top": make_series(elevation=1563, temp=lambda t: 2.0, gust=lambda t: 45.0),
     }
     (d / "openmeteo_kuehtai.json").write_text(json.dumps(series_to_openmeteo_json(powder)))
+    # road waypoints: Kühtai's corridor has three, Sudelfeld's one; one block per waypoint
+    roads = make_series(elevation=1020, temp=lambda t: -2.0,
+                        snowfall=lambda t: 1.5 if t.date() == TODAY and 5 <= t.hour < 11 else 0.0)
+    (d / "openmeteo_roads.json").write_text(json.dumps([
+        {"latitude": 47.3, "longitude": 11.2, "elevation": e,
+         "hourly": {"time": [t.strftime("%Y-%m-%dT%H:%M") for t in roads.times], **roads.values}}
+        for e in (1180, 1020, 500, 941)
+    ]))
     (d / "openmeteo_sudelfeld.json").write_text(json.dumps(series_to_openmeteo_json(warm)))
     (d / "stations.geojson").write_text(json.dumps(STATIONS_GEOJSON))
     (d / "bulletin_AT-07_2026-01-15.json").write_text(json.dumps(CAAML))

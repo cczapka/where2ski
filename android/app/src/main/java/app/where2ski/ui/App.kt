@@ -92,7 +92,7 @@ fun Where2skiApp(vm: MainViewModel = viewModel()) {
                 )
             }
             composable("settings") {
-                SettingsScreen(latest = latest, settings = settings, store = vm.settings)
+                SettingsScreen(latest = latest, settings = settings, store = vm.settings, trips = vm.trips)
             }
             composable(
                 "resort/{id}",
@@ -102,6 +102,7 @@ fun Where2skiApp(vm: MainViewModel = viewModel()) {
                 DetailScreen(
                     latest = latest, settings = settings, resortId = id, selectedDay = selectedDay,
                     onSelectDay = vm::selectDay,
+                    trips = vm.trips,
                     onBack = { nav.popBackStack() },
                 )
             }

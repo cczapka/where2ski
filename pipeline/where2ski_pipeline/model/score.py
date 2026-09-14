@@ -77,7 +77,7 @@ def avalanche_factor(level: int | None) -> float:
 
 
 def build_factors(snow: SnowAssessment, weather: DayWeather, level: int | None, travel_min: int | None,
-                  crowd: float) -> dict:
+                  crowd: float, roads: float = 1.0) -> dict:
     return {
         "fresh_snow": round(fresh_snow_factor(snow), 3),
         "snow_quality_freeride": round(snow.value_freeride, 3),
@@ -89,6 +89,7 @@ def build_factors(snow: SnowAssessment, weather: DayWeather, level: int | None, 
         "base": round(base_factor(snow), 3),
         "travel": round(travel_factor(travel_min), 3),
         "crowd": round(crowd, 3),
+        "roads": round(roads, 3),
     }
 
 

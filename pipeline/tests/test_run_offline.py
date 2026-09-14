@@ -29,6 +29,8 @@ def test_end_to_end_offline(registry_path, offline_dir, tmp_path):
     assert k["terrain"]["run_km"] == 40.5
     assert today["avalanche"]["level_top"] == 3 and today["avalanche"]["level_mid"] == 3
     assert today["scores"]["freeride"] > 60
+    assert today["roads"]["snowfall_cm"] == 9.0  # 6 morning hours at 1.5 cm/h on the worst pass
+    assert today["factors"]["roads"] < 0.6
     assert today["blockers"] == {"freeride": [], "piste": []}
     assert k["days"][2]["avalanche"] is None  # bulletin only for the first two days
 

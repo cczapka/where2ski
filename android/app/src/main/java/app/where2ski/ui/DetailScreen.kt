@@ -22,6 +22,11 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -32,6 +37,7 @@ import app.where2ski.data.Latest
 import app.where2ski.data.Mode
 import app.where2ski.data.ResortConditions
 import app.where2ski.data.Scoring
+import app.where2ski.data.TripLogStore
 import app.where2ski.data.UserSettings
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -42,6 +48,7 @@ fun DetailScreen(
     resortId: String,
     selectedDay: Int,
     onSelectDay: (Int) -> Unit,
+    trips: TripLogStore,
     onBack: () -> Unit,
 ) {
     val resort = latest?.resorts?.firstOrNull { it.id == resortId }
@@ -57,14 +64,25 @@ fun DetailScreen(
         } else {
             DayChips(latest.days, selectedDay, onSelectDay)
             val day = latest.days.getOrNull(selectedDay)?.let { date -> resort.days.firstOrNull { it.date == date } }
-            ResortDetails(resort, day, settings)
+            ResortDetails(resort, day, settings, trips)
         }
     }
 }
 
 @Composable
-private fun ResortDetails(resort: ResortConditions, day: DayConditions?, settings: UserSettings) {
+private fun ResortDetails(resort: ResortConditions, day: DayConditions?, settings: UserSettings, trips: TripLogStore) {
     val context = LocalContext.current
+    val ratings by trips.state.collectAsState()
+    var rating by remember { mutableStateOf(false) }
+    val existing = day?.let { d -> ratings.firstOrNull { it.resortId == resort.id && it.date == d.date } }
+    if (rating && day != null) {
+        RateTripDialog(
+            resort = resort, day = day, mode = settings.mode, existing = existing,
+            onDismiss = { rating = false },
+            onSave = { trips.add(it); rating = false },
+            onDelete = { trips.remove(resort.id, day.date); rating = false },
+        )
+    }
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -80,6 +98,9 @@ private fun ResortDetails(resort: ResortConditions, day: DayConditions?, setting
         if (day == null) {
             Text("No assessment for this day.", modifier = Modifier.padding(top = 12.dp))
         } else {
+            TextButton(onClick = { rating = true }) {
+                Text(if (existing == null) "Rate this day" else "Rated ${"★".repeat(existing.stars)} · edit")
+            }
             DayDetails(resort, day, settings, onOpenLink = { url ->
                 context.startActivity(Intent(Intent.ACTION_VIEW, url.toUri()))
             })
@@ -142,6 +163,16 @@ private fun DayDetails(resort: ResortConditions, day: DayConditions, settings: U
     KeyValue("Precipitation / snowfall", "%.1f mm / %.0f cm".format(day.weather.precipMm, day.weather.snowfallCm))
     KeyValue("Low cloud", day.weather.lowCloudPct?.let { "${it.toInt()} %" } ?: "–")
     KeyValue("Freezing level", day.weather.freezingLevelM?.let { "${it.toInt()} m" } ?: "–")
+
+    day.roads?.let { r ->
+        SectionTitle("Roads on the way")
+        KeyValue(r.waypoint + (r.elevation?.let { " ($it m)" } ?: ""), "${"%.0f".format(r.snowfallCm)} cm snow in the morning")
+        if (r.rainMm > 0.5) KeyValue("Rain", "${"%.0f".format(r.rainMm)} mm")
+        Text(
+            "Worst pass on the straight line from Munich; an approximation of the drive, not a routed path.",
+            style = MaterialTheme.typography.bodySmall,
+        )
+    }
 
     SectionTitle("Avalanche")
     val av = day.avalanche

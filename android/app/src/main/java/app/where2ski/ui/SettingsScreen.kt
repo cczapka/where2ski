@@ -15,17 +15,22 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import app.where2ski.data.Calibration
 import app.where2ski.data.Latest
 import app.where2ski.data.Scoring
 import app.where2ski.data.SettingsStore
+import app.where2ski.data.TripLogStore
 import app.where2ski.data.UserSettings
 
 @Composable
-fun SettingsScreen(latest: Latest?, settings: UserSettings, store: SettingsStore) {
+fun SettingsScreen(latest: Latest?, settings: UserSettings, store: SettingsStore, trips: TripLogStore) {
+    val ratings by trips.state.collectAsState()
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -55,6 +60,45 @@ fun SettingsScreen(latest: Latest?, settings: UserSettings, store: SettingsStore
             }
         }
         TextButton(onClick = { store.resetWeights(settings.mode) }) { Text("Reset to defaults") }
+
+        SectionTitle("Your ski days")
+        val suggestion = remember(ratings, settings) {
+            Calibration.suggest(ratings, settings.mode, settings.currentWeights)
+        }
+        if (!suggestion.enoughData) {
+            Text(
+                "Rate a day on a resort page after skiing it. After ${Calibration.MIN_RATINGS} rated " +
+                    "${settings.mode.label.lowercase()} days the app can suggest weights that match what you " +
+                    "actually enjoyed (${suggestion.ratings} so far).",
+                style = MaterialTheme.typography.bodySmall,
+            )
+        } else {
+            Text(
+                "${suggestion.ratings} rated ${settings.mode.label.lowercase()} days. A factor that was high on " +
+                    "the days you liked gets more weight.",
+                style = MaterialTheme.typography.bodySmall,
+            )
+            suggestion.factors.filter { it.changed }.forEach { f ->
+                KeyValue(
+                    Scoring.labels[f.key] ?: f.key,
+                    "${"%.0f".format(f.currentWeight)} → ${"%.0f".format(f.suggestedWeight)} (r = ${"%.2f".format(f.correlation)})",
+                )
+            }
+            if (suggestion.factors.none { it.changed }) {
+                Text("Your current weights already match your ratings.", style = MaterialTheme.typography.bodySmall)
+            } else {
+                TextButton(onClick = {
+                    suggestion.weights.forEach { (key, value) -> store.setWeight(settings.mode, key, value) }
+                }) { Text("Apply suggested weights") }
+            }
+        }
+        ratings.take(5).forEach { r ->
+            Text(
+                "${r.date} · ${r.resortName} · ${"★".repeat(r.stars)}" +
+                    (if (r.chips.isEmpty()) "" else " · " + r.chips.joinToString(", ")),
+                style = MaterialTheme.typography.bodySmall,
+            )
+        }
 
         SectionTitle("Passes")
         val passes = remember(latest) { latest?.resorts?.flatMap { it.passes }?.distinct()?.sorted().orEmpty() }

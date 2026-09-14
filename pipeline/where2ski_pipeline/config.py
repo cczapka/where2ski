@@ -67,6 +67,7 @@ WEIGHTS = {
         "base": 0,
         "travel": 5,
         "crowd": 5,
+        "roads": 5,
     },
     "piste": {
         "fresh_snow": 15,
@@ -78,6 +79,7 @@ WEIGHTS = {
         "base": 10,
         "travel": 5,
         "crowd": 5,
+        "roads": 5,
     },
 }
 

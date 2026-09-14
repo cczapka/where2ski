@@ -13,6 +13,7 @@ enum class Mode(val key: String, val label: String) {
 object Scoring {
     val factorKeys = listOf(
         "fresh_snow", "snow_quality", "avalanche", "sun_vis", "wind", "temperature", "base", "travel", "crowd",
+        "roads",
     )
 
     val labels = mapOf(
@@ -25,16 +26,17 @@ object Scoring {
         "base" to "Base depth",
         "travel" to "Travel time",
         "crowd" to "Crowds",
+        "roads" to "Roads on the way",
     )
 
     val defaultWeights: Map<Mode, Map<String, Double>> = mapOf(
         Mode.FREERIDE to mapOf(
             "fresh_snow" to 25.0, "snow_quality" to 25.0, "avalanche" to 20.0, "sun_vis" to 10.0,
-            "wind" to 5.0, "temperature" to 5.0, "base" to 0.0, "travel" to 5.0, "crowd" to 5.0,
+            "wind" to 5.0, "temperature" to 5.0, "base" to 0.0, "travel" to 5.0, "crowd" to 5.0, "roads" to 5.0,
         ),
         Mode.PISTE to mapOf(
             "fresh_snow" to 15.0, "snow_quality" to 15.0, "avalanche" to 0.0, "sun_vis" to 30.0,
-            "wind" to 10.0, "temperature" to 10.0, "base" to 10.0, "travel" to 5.0, "crowd" to 5.0,
+            "wind" to 10.0, "temperature" to 10.0, "base" to 10.0, "travel" to 5.0, "crowd" to 5.0, "roads" to 5.0,
         ),
     )
 

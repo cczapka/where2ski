@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import app.where2ski.data.Latest
 import app.where2ski.data.Repository
 import app.where2ski.data.SettingsStore
+import app.where2ski.data.TripLogStore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -13,6 +14,7 @@ import kotlinx.coroutines.launch
 class MainViewModel(app: Application) : AndroidViewModel(app) {
     private val repository = Repository(app)
     val settings = SettingsStore(app)
+    val trips = TripLogStore(app)
 
     private val _latest = MutableStateFlow<Latest?>(null)
     val latest: StateFlow<Latest?> = _latest

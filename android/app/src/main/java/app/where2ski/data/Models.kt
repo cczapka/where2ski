@@ -70,6 +70,16 @@ data class DayConditions(
     val snow: SnowInfo = SnowInfo(),
     val weather: WeatherInfo = WeatherInfo(),
     val avalanche: AvalancheInfo? = null,
+    val roads: RoadInfo? = null,
+)
+
+@Serializable
+data class RoadInfo(
+    val waypoint: String = "",
+    val elevation: Int? = null,
+    @SerialName("snowfall_cm") val snowfallCm: Double = 0.0,
+    @SerialName("rain_mm") val rainMm: Double = 0.0,
+    @SerialName("t_min") val tMin: Double? = null,
 )
 
 @Serializable
