@@ -138,7 +138,8 @@ def road_report(points: list[RoadPoint], day: date) -> dict | None:
             "rain_mm": round(rain, 1),
             "t_min": round(min(temps), 1) if temps else None,
         }
-        if worst is None or snow > worst["snowfall_cm"]:
+        # worst = most snow; on a tie the higher pass, which is the one that turns first
+        if worst is None or (snow, p.elevation) > (worst["snowfall_cm"], worst["elevation"]):
             worst = entry
     if worst is None:
         return None

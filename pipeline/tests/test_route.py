@@ -52,6 +52,15 @@ def test_road_report_picks_the_worst_waypoint():
     assert rep["points"] == 2 and rep["t_min"] == -3.0
 
 
+def test_equal_snowfall_reports_the_higher_pass():
+    points = [
+        RoadPoint("Inntal / Kufstein", 500, series()),
+        RoadPoint("Felbertauern Nordportal", 1650, series()),
+        RoadPoint("Pass Thurn", 1274, series()),
+    ]
+    assert road_report(points, DAY)["waypoint"] == "Felbertauern Nordportal"
+
+
 def test_road_factor_scale():
     assert road_factor(None, expected=False) == 1.0   # no pass on the drive
     assert road_factor(None, expected=True) == 0.9    # pass exists but no data
