@@ -74,7 +74,11 @@
    ],
    "travel_min": 95,
    "links": {
-    "bergfex": "https://www.bergfex.at/waidring-steinplatte/"
+    "bergfex": "https://www.bergfex.at/waidring-steinplatte/",
+    "radius_km": 6,
+    "openskimap_names": [
+     "Steinplatte"
+    ]
    }
   },
   {
@@ -260,7 +264,12 @@
     "snowcard_tirol"
    ],
    "travel_min": 100,
-   "links": {}
+   "links": {
+    "radius_km": 5,
+    "openskimap_names": [
+     "Axamer Lizum"
+    ]
+   }
   },
   {
    "id": "nordkette",
@@ -339,7 +348,10 @@
    "travel_min": 160,
    "glacier": true,
    "links": {
-    "radius_km": 10
+    "radius_km": 9,
+    "openskimap_names": [
+     "Sölden"
+    ]
    }
   },
   {
@@ -377,7 +389,13 @@
    ],
    "travel_min": 150,
    "glacier": true,
-   "links": {}
+   "links": {
+    "radius_km": 5,
+    "openskimap_names": [
+     "Pitztaler Gletscher",
+     "Rifflsee"
+    ]
+   }
   },
   {
    "id": "kaunertal",
@@ -513,7 +531,12 @@
     "garmisch"
    ],
    "travel_min": 75,
-   "links": {}
+   "links": {
+    "radius_km": 5,
+    "openskimap_names": [
+     "Garmisch-Classic"
+    ]
+   }
   },
   {
    "id": "zugspitze",
@@ -535,7 +558,12 @@
     "open": "11-15",
     "close": "05-01"
    },
-   "links": {}
+   "links": {
+    "radius_km": 5,
+    "openskimap_names": [
+     "Zugspitze"
+    ]
+   }
   },
   {
    "id": "sudelfeld",
@@ -569,7 +597,12 @@
     "alpen_plus"
    ],
    "travel_min": 60,
-   "links": {}
+   "links": {
+    "radius_km": 5,
+    "openskimap_names": [
+     "Spitzingsee"
+    ]
+   }
   },
   {
    "id": "brauneck",
@@ -603,7 +636,12 @@
     "oberstdorf_kleinwalsertal"
    ],
    "travel_min": 140,
-   "links": {}
+   "links": {
+    "radius_km": 5,
+    "openskimap_names": [
+     "Nebelhorn"
+    ]
+   }
   },
   {
    "id": "fellhorn",
@@ -635,7 +673,12 @@
    },
    "passes": [],
    "travel_min": 130,
-   "links": {}
+   "links": {
+    "radius_km": 4,
+    "openskimap_names": [
+     "Jenner"
+    ]
+   }
   },
   {
    "id": "saalbach",
@@ -689,7 +732,12 @@
    ],
    "travel_min": 140,
    "glacier": true,
-   "links": {}
+   "links": {
+    "radius_km": 6,
+    "openskimap_names": [
+     "Kitzsteinhorn"
+    ]
+   }
   },
   {
    "id": "hochkoenig",
@@ -771,7 +819,10 @@
    "passes": [],
    "travel_min": 175,
    "links": {
-    "radius_km": 6
+    "radius_km": 6,
+    "openskimap_names": [
+     "Obertauern"
+    ]
    }
   },
   {
