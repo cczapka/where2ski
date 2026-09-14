@@ -143,6 +143,12 @@ sensor.
   gust in m/s, `DW` wind direction, `PSUM_*` precipitation in mm, `RH`, `ISWR`/
   `RSWR` radiation, plus `name`, `altitude`, `operator`, `microRegionID`,
   `date`. The schema lives in the `@albina-euregio/linea` package.
+- Each station also carries `dataURLs` with its recent time series: SMET
+  files (MeteoIO format, sometimes gzip-compressed without a content-encoding
+  header) for the avalanche-service stations, and GeoSphere dataset-API JSON
+  for the Tyrolean hydrographic stations. The pipeline reads the last days of
+  snow-surface temperature (`TSS`), air temperature and snow height from them;
+  in the first live run 40 of 41 resorts had a usable series.
 - Open data page: `https://lawinen.report/more/open-data`.
 
 **Land Tirol OGD station CSVs** ✅ — the underlying Tyrolean data, per station
@@ -313,11 +319,18 @@ gives you a personal weight fit and a sanity check on the thresholds above.
    aspect class, so a hand-drawn zone plugs straight in.
 
 This is offline preprocessing, so the phone never touches a DEM. Implemented
-in `pipeline/tools/terrain.py`: OpenSkiData already carries elevations on the
+in `pipeline/tools/terrain.py` (first live build: 41 of 41 resorts, e.g.
+SkiWelt 426 runs / 234 km, Kühtai 75 runs with 23 % north-facing terrain,
+Nordkette mostly south-east to south-west): OpenSkiData already carries elevations on the
 run coordinates, so no separate DEM is needed; the downhill direction of every
 segment is taken from the elevation difference, and segments flatter than 3 %
-are ignored. A resort can pin its OpenSkiMap area ids with
-`links.openskimap_ids` in the registry when the automatic match is wrong.
+are ignored. Matching prefers the smallest OpenSkiMap ski-area polygon that
+contains the resort point, so sub-resorts are not swallowed by umbrella areas
+such as "Stubai" or "Ski amadé"; `links.openskimap_names` or
+`links.openskimap_ids` pin the areas explicitly and `links.radius_km` limits
+how far from the resort point runs may lie (needed where two resorts share a
+ridge, e.g. Pitztal and Sölden). Roses built from under 5 km of runs are not
+used.
 
 ---
 
