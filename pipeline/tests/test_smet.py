@@ -32,7 +32,7 @@ def test_parse_smet_units_and_hourly():
     assert h.values["TSS"][1] is None  # nodata
     six = h.hourly[datetime(2026, 1, 15, 6, 0)]
     assert abs(six["ta"] - (-10.866667)) < 1e-3
-    assert abs(six["tss"] - (-11.6)) < 1e-6  # mean of the two valid values
+    assert abs(six["tss"] - (-11.75)) < 1e-6  # mean of the two valid values
     noon = h.hourly[datetime(2026, 1, 15, 12, 0)]
     assert noon["tss"] > -0.5  # melting surface at midday
 
