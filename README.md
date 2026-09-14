@@ -58,8 +58,16 @@ small status page). Once a day it also commits a station snapshot to
 Kotlin with Jetpack Compose. It downloads `latest.json`, caches it, and lets
 you switch between Freeride and Piste mode, adjust factor weights with sliders,
 filter by pass and travel time, and browse a ranking, a day-by-resort matrix, a
-map and a detail page per resort. The `android` workflow builds a debug APK on
-every push and attaches it to the workflow run.
+map and a detail page per resort with the aspect rose and the reasoning.
+
+After a ski day you can rate it with stars and condition chips; the factor
+values of that day are stored with the rating, and the settings screen uses
+them to suggest weights that match what you actually enjoyed. A background job
+refreshes every six hours, notifies about powder days, and feeds a home-screen
+widget with the best three resorts for the coming weekend.
+
+The `android` workflow builds a debug APK on every push and attaches it to the
+workflow run.
 
 Open `android/` in Android Studio, or build with `./gradlew :app:assembleDebug`.
 

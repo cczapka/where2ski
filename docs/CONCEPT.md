@@ -89,6 +89,7 @@ This is the part no public site does well; see §4 for the model. Inputs:
 | Travel time from Munich | A 2.5 h drive needs a better day than a 1 h drive | Precomputed driving time per resort; optional live routing | OpenRouteService / OSRM (§3.6) |
 | Road weather on the route | Fresh snow on Fernpass/Kufstein/Brenner adds time and chain risk | Forecast snowfall along the route corridor | Open-Meteo at route points |
 | Crowds | Weekends and Bavarian/Austrian school holidays; good-weather weekends are packed | Calendar factor | OpenHolidays API (§3.5) |
+| Feedback from your own days | The only way to learn whether the weights match your taste | Stars plus condition chips after a ski day, stored with that day's factor values | App (§9, phase 3) |
 | Season / lift status | Not open = score 0 | Registry season dates; later optional resort status feeds | Registry |
 | Pass coverage / price | Snow Card Tirol = free marginal cost | Registry | Registry |
 | Webcams | Human visual check, not a scored factor | Link-out per resort | Registry (feratel/panomax/resort) |
@@ -230,6 +231,15 @@ Baden-Württemberg holidays for the crowd factor if desired.
 **OpenRouteService** (free key) or a public **OSRM** instance ✅ — compute
 driving time Munich → resort once and store it. Live traffic is a later
 option (Google/TomTom APIs cost money).
+
+For road *weather* no routing service is needed: the pipeline keeps a table of
+the real passes used from Munich (Fernpass 1216 m, Gerlospass 1531 m, Pass
+Thurn 1274 m, Brenner 1370 m, Arlberg, Radstädter Tauern, Grießenpass and so
+on) with their road elevations, and keeps the ones within 22 km of the
+straight line to the resort, at most three. Elevation is what decides rain
+versus snow, so using the real road height matters more than an exact routed
+path. Resorts whose drive crosses no pass (Berchtesgaden, the Bavarian
+foothills) are marked as having clear roads rather than unknown ones.
 
 ### 3.7 Resort metadata
 
@@ -481,10 +491,22 @@ ever reads static JSON.
   melt-freeze cycles instead of the model temperature.
 - The app shows the rose, the best aspect and the station used.
 
-**Phase 3 – personalisation and comfort**
-- Post-trip rating and weight calibration, notifications and widget,
-  holiday crowd factor, route snowfall, LWD Bayern and Salzburg station
-  coverage completed, hand-drawn favourite off-piste zones.
+**Phase 3 – personalisation and comfort** (implemented, except off-piste zones)
+- Road conditions on the drive: `pipeline/where2ski_pipeline/sources/route.py`
+  keeps the real Alpine road passes used from Munich with their true road
+  elevations, matches them to a resort by a corridor around the straight line
+  (`links.road_waypoints` pins or clears the list), and fetches them in one
+  batched request. Morning snowfall on the worst pass becomes the `roads`
+  factor and a per-day report in the app.
+- Post-trip ratings: rate a day from the resort page with stars and condition
+  chips. The factor values of that day are stored with the rating, so the
+  settings screen can correlate each factor with the stars and suggest weights
+  that match what you actually enjoyed (from five rated days per mode).
+- Alerts and widget: a WorkManager job refreshes every six hours, notifies
+  about powder days and days scoring above 75 under your own weights and
+  filters (each day announced once), and updates a home-screen widget with the
+  best three resorts for the coming weekend.
+- Still open: hand-drawn favourite off-piste zones.
 
 ---
 
