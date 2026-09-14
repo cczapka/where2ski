@@ -57,6 +57,16 @@ jobs:
           d = json.load(open("out/latest.json"))
           print("generated", d["generated_at"], "today", d["today"])
           print("sources", json.dumps(d["status"]["sources"], indent=1)[:4000])
+          print("road waypoints:", ", ".join(d["status"]["sources"].get("roads", {}).get("waypoints", [])) or "none")
+          for r in d["resorts"]:
+              t = r["days"][0] if r["days"] else None
+              road = (t or {}).get("roads")
+              if road:
+                  print(f"roads {r['id']:22} {road['waypoint'][:26]:26} {road['elevation']:5} m  "
+                        f"snow {road['snowfall_cm']:5.1f} cm  rain {road['rain_mm']:5.1f} mm  "
+                        f"factor {t['factors']['roads']:.2f}")
+              else:
+                  print(f"roads {r['id']:22} no pass on the drive           factor {(t or {}).get('factors', {}).get('roads')}")
           for r in d["resorts"][:41]:
               for st in r.get("stations", [])[:1]:
                   print(f"station sample {r['id']:22} {st['name'][:28]:28} {st.get('elevation')} m  hs {st.get('hs')} hn24 {st.get('hn24')} "
