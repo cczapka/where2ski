@@ -70,10 +70,13 @@ Two limits of the evidence, so they are not forgotten:
 | 5 | Lift and piste status | F7 fully | M, with an investigation gate | – |
 | 6 | Avalanche coverage outside Tyrol and outside the season | F8 fully | S | WP1 |
 | 7 | Confidence from ensembles | false precision | S | WP3 |
+| 8 | Past days in the app, and feedback after a ski day | no way to compare a day skied with what was forecast; ratings cannot reach the model | M | WP2 |
 
-Recommended order: 0, 1, 2, 3, 4, then 6, 5, 7. WP1 and WP2 are independent
-and can be done in either order. WP5 starts with an investigation that can run
-in parallel at any time.
+Recommended order: 0, 1, 2, 8, 3, 4, then 6, 5, 7. WP1 and WP2 are
+independent and can be done in either order. WP8 comes straight after the
+archive because feedback collected early in the season is worth the most, and
+because seeing past days lets the owner judge every later fix personally. WP5
+starts with an investigation that can run in parallel at any time.
 
 Sizes are relative: S is one focused working session, M is two, L is three to
 four.
@@ -564,7 +567,167 @@ shows avalanche problems with aspects.
 
 ---
 
-## 12. App changes in one place
+## 12. WP8 – Past days in the app, and feedback after a ski day
+
+**Problem.** Two gaps in the app as built:
+
+- The detail screen offers only the days of the current forecast. A day can
+  be rated until midnight and is gone the next morning. There is no way to
+  look at a day already skied and compare it with what was forecast.
+- A rating is stars plus free chips, stored only on the phone, and used only
+  to suggest factor weights. It says nothing about where on the mountain the
+  snow was found, and it never reaches the snow model.
+
+Stations measure depth and temperature. Nobody measures "is it crust". The
+skier's own report is the only ground truth the snow-surface model of WP4 can
+ever get, so this package is worth more than its size suggests.
+
+### 12.1 History published by the pipeline
+
+Built from the archive of WP2, so it depends on that package.
+
+- `run.py`, new `write_history()`: one file per resort on the published page,
+  `history/{resort}.json`, covering the season so far. Per past date:
+
+```json
+{
+  "date": "2026-11-13",
+  "forecast": {
+    "3": {"score_freeride": 41, "score_piste": 58, "snow_mid_cm": 1, "snow_top_cm": 2,
+          "state": "crust", "sun_h": 4.5, "gust_top": 60, "t_mid": -6},
+    "1": {"…": "same fields, forecast made the day before"},
+    "0": {"…": "same fields, forecast made that morning"}
+  },
+  "measured": {"new_snow_cm": 9.0, "base_cm": 22, "t_min": -9.1, "t_max": -4.2,
+               "gust_max": 57, "surface_melting_h": 0, "stations": 3},
+  "analysis": {"state": "powder", "new_on_top_cm": 12, "sun_h": 5.0}
+}
+```
+
+- `forecast` holds what the app said three days before, the day before and
+  that morning. Lead days kept are a config list, `HISTORY_LEADS = [0, 1, 3]`.
+- `measured` comes from the stations, after the quality checks of WP1: new
+  snow by the following morning, base depth, temperature range, strongest
+  gust, and hours with a melting surface where a station measures it.
+- `analysis` is the pipeline's own second opinion, computed the day after with
+  the measurements in hand. With WP4 it is simply the surface history read at
+  yesterday noon. It is stored in the archive as lead −1. Sunshine has no
+  station measurement, so it is the weather model's short-range value and is
+  labelled as such in the app.
+- Size: about 50 KB per resort and season. The app fetches a file only when a
+  resort's history is opened.
+- Backfill: the 65 stored snapshots give the same-morning forecast and the
+  measurements back to 13 September. Forecasts from earlier lead days exist
+  from the day the archive starts.
+
+### 12.2 Past days in the app
+
+- Resort detail screen: a "Past days" button opens `HistoryScreen`. Newest
+  first, one row per day: date, the score forecast the day before, measured
+  new snow, and the owner's stars if the day was rated.
+- Tapping a day opens `DayCompareScreen`:
+
+| | 3 days before | Day before | That morning | Measured |
+|---|---|---|---|---|
+| New snow | 1 cm | 2 cm | 2 cm | 9 cm |
+| Surface | crust | crust | corn | powder, by analysis |
+| Base | 12 cm | 12 cm | 13 cm | 22 cm |
+| Sun | 4.5 h | 5 h | 5 h | 5 h, model |
+| Gusts at top | 60 | 55 | 57 | 57 km/h |
+| Score | 41 | 46 | 58 | – |
+
+  Cells that disagree with the measured column beyond a tolerance are
+  highlighted. Above the table one generated sentence gives the verdict, for
+  example "New snow under-forecast by 7 cm. Wind and sun matched." The owner's
+  own report, if there is one, is shown as a further column.
+- **Rating works here.** "Rate this day" on a past day uses the forecast of
+  that morning for the factor values. This removes the midnight limit.
+- A "My days" list in settings: every rated day with forecast score, stars,
+  and whether the surface report agreed.
+- Code: `Repository.history(resortId)` with a file cache, new models
+  `HistoryDay`, `HistoryForecast`, `Measured`, two new screens, one new route
+  in `App.kt`. A unit test decodes a sample file and checks the verdict
+  sentence.
+
+### 12.3 A feedback form that matches what the model predicts
+
+The form replaces the free chips. It is meant to take half a minute on the
+last lift or in the evening. Every question is optional.
+
+1. **The day overall**: one to five stars. This is taste, and feeds the
+   weights as today.
+2. **Snow where you skied**, up to three entries, each with:
+   - surface: powder, wind-packed, heavy and moist, breakable crust, firn or
+     corn, hard or icy, slush. The same list as the surface kinds of WP4.
+   - fresh snow on top: none, about 5, 10, 20, or 30 cm and more
+   - facing: north, east, south, west, or mixed
+   - height: lower, middle, or upper part of the resort
+   - on piste or off piste
+3. **Visibility**: clear, flat light, fog. **Wind**: calm, windy, lifts
+   closed by wind.
+4. **Crowds**: empty, normal, packed. **Lifts**: all, most, few.
+5. A free note.
+
+`TripRating` gains `observations`, `visibility`, `wind`, `crowd`, `lifts` and
+`note`, all with defaults, so existing ratings still load.
+
+**Being asked at the right moment.** A forecast day gets a "Going" switch.
+A planned day is stored on the phone, and at 18:00 that evening a
+notification asks "How was Sölden?" and opens the form. A planned day also
+triggers a notification when its score changes by 15 points or more
+beforehand. No location permission is needed.
+
+### 12.4 What the feedback is used for
+
+Three uses, in rising order of effort.
+
+1. **On the phone, at once.** The comparison screen shows the report next to
+   forecast and analysis, per entry: "South side, middle: you found crust, the
+   app said crust." Settings show running agreement, for example "surface
+   matched on 7 of 10 reports, fresh snow within 5 cm on 6 of 10".
+2. **Personal weights.** The existing suggestion from stars stays. It gains
+   nothing from the new questions directly, but the stars become easier to
+   interpret once a bad day can be traced to a wrong forecast instead of a
+   wrong weight.
+3. **The model itself.** A "Share feedback" button exports all reports as one
+   JSON file through the Android share sheet. A new command
+   `verify.py feedback FILE` compares each report with the archive: a table of
+   reported against forecast surface kind, the error of fresh snow depth, and
+   a list of every disagreeing day. Each disagreement becomes two things: a
+   recorded regression case, using the record and replay of WP0, and a data
+   point for tuning the thresholds of WP4, such as the depth at which new snow
+   hides a crust.
+
+What this cannot do: with one skier and perhaps 25 days a season, feedback
+will not retrain a model statistically. It finds systematic errors and pins
+them down as tests, which is how the review of November 2026 worked, only
+with far better evidence.
+
+**Getting reports off the phone automatically** is a later step, and a
+decision. The repository is public, so anything stored in it shows where and
+when the owner skied. Options, in order of recommendation:
+
+- Export by hand a few times per season, and commit the file to a private
+  repository. No new infrastructure.
+- The app opens a pre-filled issue in a private repository; one tap submits
+  it, and a workflow files it into the feedback data. No secret on the phone.
+- The app commits directly with an access token limited to one repository.
+  Fully automatic, but a secret lives on the phone.
+
+### 12.5 Tests and acceptance
+
+- Unit tests for decoding history, the verdict sentence, the extended rating
+  with old and new files, and the export format.
+- `verify.py feedback` on a hand-made file with one agreeing and one
+  disagreeing report.
+
+**Acceptance.** A day skied a week ago can be opened, compared and rated. An
+exported file with ten reports produces the agreement table. The form can be
+completed in under a minute; the owner is the judge of that.
+
+---
+
+## 13. App changes in one place
 
 | Change | From |
 |---|---|
@@ -578,6 +741,9 @@ shows avalanche problems with aspects.
 | Lifts open, "open now" filter | WP5 |
 | New snow as a range, probability on alerts | WP7 |
 | Forecast quality card from `verification.json` | WP2 |
+| Past days per resort with a forecast against measurement comparison | WP8 |
+| Rating of past days; structured feedback form; "Going" switch with an evening reminder | WP8 |
+| "My days" list, agreement statistics, feedback export | WP8 |
 
 `Models.kt` gains the fields with defaults, so one app build reads both old
 and new data. Each package updates `ScoringTest` with a sample of the new
@@ -585,7 +751,7 @@ JSON.
 
 ---
 
-## 13. Risks and open questions
+## 14. Risks and open questions
 
 | Risk | Mitigation |
 |---|---|
@@ -595,6 +761,8 @@ JSON.
 | The energy terms in WP4 have several tunable numbers | Calibrate against measured snow-surface temperature before trusting them; keep the old rules switchable until then |
 | More requests per run | Today 42 requests per run to the weather service, about 340 per day, against its fair-use limit of 10 000. WP7 adds 41 per run |
 | Repository growth from daily data | CSV archive at a third of today's size; optional `data` branch |
+| Feedback reveals where and when the owner skied | Reports stay on the phone by default; export goes to a private repository |
+| A long form does not get filled in | Every question optional; stars alone remain a valid rating; an evening reminder for planned days |
 
 Decisions needed from the owner:
 
@@ -604,10 +772,12 @@ Decisions needed from the owner:
 4. The glacier off-piste threshold of 120 cm, and whether glaciers should be
    offered for freeride at all before the first bulletin of the season.
 5. Create `main` and make it the default branch.
+6. How feedback leaves the phone: export by hand, a pre-filled issue in a
+   private repository, or a direct commit with a token.
 
 ---
 
-## 14. Not in this plan
+## 15. Not in this plan
 
 Kept for later, in rough order of value: a second weather model from
 GeoSphere as a cross-check, daily gridded snow depth from GeoSphere to judge
