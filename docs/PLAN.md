@@ -78,6 +78,12 @@ archive because feedback collected early in the season is worth the most, and
 because seeing past days lets the owner judge every later fix personally. WP5
 starts with an investigation that can run in parallel at any time.
 
+**First milestone:** WP0, WP1 and WP2 together. They need no new data source,
+they stop the app from showing bad inputs as good ones, and they produce the
+numbers every later package is judged by. The milestone is reached when the
+verification tool reproduces the review's baseline and the published data
+carries no stale, spiked or placeholder value.
+
 Sizes are relative: S is one focused working session, M is two, L is three to
 four.
 
@@ -165,9 +171,16 @@ fixtures built from the stored snapshots.
   - Piste mode on a glacier is no longer blocked by natural snow depth, because
     the base is ice and the operator decides. Thin cover instead lowers the
     piste snow-quality value and adds the note "thin cover over glacier ice".
-  - Freeride mode on a glacier requires `BASE_MIN_FREERIDE_GLACIER = 120` cm.
-    Below that the blocker reads "too little snow over glacier ice for
-    off-piste: crevasses".
+  - Freeride mode on a glacier requires `BASE_MIN_FREERIDE_GLACIER = 120` cm,
+    measured at a station within 250 m of the top band. Below that the blocker
+    reads "too little snow over glacier ice for off-piste: crevasses". Without
+    such a measurement the blocker reads "snow depth over the glacier ice is
+    not measured". Operator-reported depth is not accepted for this check,
+    because it is self-reported and this is a safety rule.
+  - Glaciers are not blocked for freeride merely because the bulletin season
+    has not started. In an autumn with deep early snow that would hide exactly
+    the days worth knowing about. The depth rule above applies, and the
+    missing bulletin lowers the score and adds its note through 5.4.
   - Freeride mode elsewhere uses 60 cm where the mid band lies below 2000 m and
     80 cm above, because alpine ground is rock and scree.
 - Station choice for the depth check moves from "near the mid band" to "near
@@ -241,9 +254,17 @@ days instead of one.
   written. The 65 existing snapshots stay, and
   `tools/snapshots_to_archive.py` converts them into day-0 archive rows so the
   baseline of the review is preserved.
-- Decision needed: keep the archive on the default branch, or commit it to a
-  separate `data` branch so the code history stays clean. Recommendation: a
-  `data` branch, read by the verification tool through a shallow checkout.
+- The archive lives on a separate branch named `data`, so daily data stays
+  out of the code history. The pipeline job checks that branch out into a
+  second directory, appends the day's rows and pushes it. The verification
+  tool and `write_history()` of WP8 read it from the same checkout.
+- The `snapshots/` directory stays on the default branch until the converter
+  has run and its result is verified, then it is removed from the branch tip.
+- To confirm: GitHub disables scheduled workflows after 60 days without
+  repository activity, and today's daily snapshot commit on the default branch
+  is what prevents that. If pushes to `data` do not count as activity, the
+  pipeline also updates a one-line date stamp on the default branch once a
+  month.
 
 ### 6.2 Verification tool
 
@@ -498,7 +519,12 @@ of most Tyrolean resorts; the joint page of the five Tyrolean glaciers lists
 open status, snow depth and last snowfall; Liftie is an open-source collection
 of status scrapers that can be self-hosted.
 
-Then ask for permission where a feed exists but no terms are published.
+Then ask for permission where a feed exists but no terms are published. The
+request is drafted as part of this package and sent by the owner from his own
+address, since it is his project and his name. It states the purpose, the
+request rate of once per three hours, and that the app is personal and
+non-commercial. Until an answer arrives, only sources whose published terms
+allow automated reading are used.
 
 **Gate.** If a permitted source covers at least 70 % of the resorts, build the
 adapters below. If not, keep WP1's planned dates, add a manual override file
@@ -703,16 +729,19 @@ will not retrain a model statistically. It finds systematic errors and pins
 them down as tests, which is how the review of November 2026 worked, only
 with far better evidence.
 
-**Getting reports off the phone automatically** is a later step, and a
-decision. The repository is public, so anything stored in it shows where and
-when the owner skied. Options, in order of recommendation:
+**Getting reports off the phone.** The repository is public, so anything
+stored in it shows where and when the owner skied. Reports therefore stay on
+the phone, and leave it only by the export button. The owner exports a few
+times per season and commits the file to a private repository of his own.
+`verify.py feedback` takes the file path as an argument and never copies
+report content into the public repository; only the resulting thresholds and
+anonymous test inputs are committed there.
 
-- Export by hand a few times per season, and commit the file to a private
-  repository. No new infrastructure.
-- The app opens a pre-filled issue in a private repository; one tap submits
-  it, and a workflow files it into the feedback data. No secret on the phone.
-- The app commits directly with an access token limited to one repository.
-  Fully automatic, but a secret lives on the phone.
+Automatic sync is deferred. It is worth revisiting when the form is in
+regular use or a second person uses the app. The two candidates, in order of
+preference: the app opens a pre-filled issue in the private repository, which
+needs one tap and no secret on the phone; or the app commits directly with an
+access token limited to that one repository.
 
 ### 12.5 Tests and acceptance
 
@@ -764,16 +793,35 @@ JSON.
 | Feedback reveals where and when the owner skied | Reports stay on the phone by default; export goes to a private repository |
 | A long form does not get filled in | Every question optional; stars alone remain a valid rating; an evening reminder for planned days |
 
-Decisions needed from the owner:
+### Decisions taken
 
-1. Approve the development hosts of WP0.
-2. Archive on the default branch or on a `data` branch.
-3. Whether to contact Intermaps and the operators about status feeds.
-4. The glacier off-piste threshold of 120 cm, and whether glaciers should be
-   offered for freeride at all before the first bulletin of the season.
-5. Create `main` and make it the default branch.
-6. How feedback leaves the phone: export by hand, a pre-filled issue in a
-   private repository, or a direct commit with a token.
+Agreed with the owner on 16 November 2026, following the recommendations of
+this plan.
+
+| Topic | Decision | Who acts, and when |
+|---|---|---|
+| Order of work | 0, 1, 2, 8, 3, 4, 6, 5, 7. First milestone is WP0 with WP1 and WP2 | – |
+| Development hosts | The hosts listed in WP0 are allowed in the development environment | An approval prompt is raised at the start of WP0; the owner confirms it |
+| Forecast archive | On a separate `data` branch | Set up in WP2 |
+| Status feeds | Ask for permission; use only sources whose terms allow it until then | Request drafted in WP5, sent by the owner |
+| Freeride on glaciers | 120 cm measured near the top band, as a starting value. No blanket block before the bulletin season. No measurement means blocked | WP1 |
+| Default branch | Create `main` from the current branch and make it the default | Branch pushed on the owner's go-ahead; the default is switched by the owner in the repository settings |
+| Feedback leaving the phone | Export by hand into a private repository. Automatic sync deferred | WP8; the owner creates the private repository |
+
+### Still to confirm during implementation
+
+These are technical unknowns, not decisions. Each is checked by the package
+that depends on it, and each has a fallback already described there.
+
+| Unknown | Checked in | Fallback |
+|---|---|---|
+| Whether the weather service delivers a snow-line variable per model | WP3 | Wet-bulb estimate from band temperatures |
+| Which of query point, phase split and density explains the snowfall miss | WP3, experiment 7.1 | The ablation table says where to work next |
+| Format of the per-region bulletin files for Bavaria and Salzburg | WP6, on the first bulletin of the season | Ratings file, as today |
+| Whether the avalanche service's blog list is publicly readable | WP6 | Static note with a link to the blog |
+| Exact model keys of the ensemble interface | WP7 | Lead-time table, as today |
+| Whether pushes to `data` keep scheduled workflows alive | WP2 | Monthly date stamp on the default branch |
+| Whether a permitted status source covers 70 % of resorts | WP5 | Planned dates, a manual override file, and the app user's own marking |
 
 ---
 
