@@ -460,6 +460,9 @@ ever reads static JSON.
 
 ## 9. Roadmap
 
+Phases 1 to 3 below are built. The next phase follows a review against real
+data and is specified in [PLAN.md](PLAN.md).
+
 **Phase 1 – replace scraping, ship a usable ranking** (implemented)
 - Registry of 41 major resorts with elevations, passes, travel time, links,
   optional season dates.

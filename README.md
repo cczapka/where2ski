@@ -14,8 +14,10 @@ resort and day.
 
 ## Status
 
-Phase 1 in progress. The design, data sources, scoring and roadmap are
-documented in [docs/CONCEPT.md](docs/CONCEPT.md).
+The pipeline and the app are running. The design, data sources and scoring are
+documented in [docs/CONCEPT.md](docs/CONCEPT.md). A review against station
+measurements in November 2026 found the snowfall forecast and the snow-surface
+labels unreliable; the fixes are specified in [docs/PLAN.md](docs/PLAN.md).
 
 The earlier Python command-line prototype (Bergfex forecast ranking by sun
 hours) lives in [where2ski_py](https://github.com/cczapka/where2ski_py).
