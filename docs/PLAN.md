@@ -10,6 +10,32 @@ Scope: the pipeline (`pipeline/`), the published JSON, and the app screens that
 show it. Everything in `docs/CONCEPT.md` stays valid; this document replaces
 its roadmap section for the next phase.
 
+## Progress
+
+**First milestone (WP0, WP1, WP2): done on 17 November 2026**, apart from
+switching the default branch to `main`, which waits for the owner.
+
+| Item | State | Note |
+|---|---|---|
+| WP0 record and replay | done | `run --record DIR`, replay with `--offline DIR`; failed requests are replayed too. CI keeps each run's recording for 14 days |
+| WP0 development hosts | done | `avalanche.report` added, since the bulletin files redirect there. The weather service's daily limit is shared by the sandbox's exit address, so local live runs can hit 429; CI recordings replace them |
+| WP0 `main` as default | open | Needs the owner's go-ahead to push `main`; deploy and archive steps already run only on the default branch |
+| WP1 stale stations | done | Normal reading age is 0.3 to 1 h for every operator; the 6 to 10 Nov freeze would now be flagged |
+| WP1 quality control | done | Obergurgl spike rejected (`limit_24h`); GeoSphere's duplicate station records merged |
+| WP1 glacier rule | done | No glacier has a depth station within 250 m of its top band yet, so off-piste on glaciers is blocked with "not measured" until WP3 moves the band |
+| WP1 missing bulletin | done | Reasons `out_of_season`, `no_rating`, `beyond_bulletin`, `fetch_failed` |
+| WP1 opening dates | done | All 41 resorts, with source and `confirmed`; closing dates mostly estimated |
+| WP2 archive | done | `data` branch created by CI from the 66 snapshots. `obs` rows carry an extra `run_utc` column to tell the morning and midday sets apart |
+| WP2 verification | done | Published as `verification.json` on every run; `verify.yml` weekly and for backtests |
+
+**Baseline reproduced.** From the converted snapshots, lead 0, mid band at
+1700 m or higher, 15 Oct to 15 Nov: 5 hits of **46** snow days of 5 cm or
+more, with a mean forecast of 1.7 cm against 9.1 cm measured on those days.
+The review counted 50 snow days; the four others rested on frozen stations
+that repeated an old "new snow" reading for days (for example Feuersang
+Messfeld 3, 7.4 cm on three days in a row, 46 to 90 h old). 46 is the
+baseline for WP3.
+
 ---
 
 ## 1. Evidence this plan is built on
