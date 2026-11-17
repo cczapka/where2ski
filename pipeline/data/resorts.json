@@ -1,5 +1,5 @@
 {
- "_comment": "season is optional (\"MM-DD\" open/close, may wrap the year); defaults are Dec 1 – Apr 15, glaciers Oct 1 – May 31. Curated registry of major resorts reachable from Munich. Coordinates and elevations are approximate (resort centre / lift base, typical mid-mountain, highest lift) and should be refined. travel_min is an approximate winter driving time from Munich. Elevations in metres. links.radius_km (default 8) limits which OpenSkiMap runs count for a resort; links.openskimap_names / openskimap_ids pin the ski areas used by the terrain tool. links.road_waypoints pins the road passes used for the drive-conditions factor.",
+ "_comment": "season: open/close as dates of the current season (or \"MM-DD\" for every year), source, confirmed (false when only portals or estimates give the date), optional limited_until (a few lifts only) and note; defaults are Dec 1 – Apr 15, glaciers Oct 1 – May 31. Curated registry of major resorts reachable from Munich. Coordinates and elevations are approximate (resort centre / lift base, typical mid-mountain, highest lift) and should be refined. travel_min is an approximate winter driving time from Munich. Elevations in metres. links.radius_km (default 8) limits which OpenSkiMap runs count for a resort; links.openskimap_names / openskimap_ids pin the ski areas used by the terrain tool. links.road_waypoints pins the road passes used for the drive-conditions factor.",
  "resorts": [
   {
    "id": "skiwelt",
@@ -19,6 +19,14 @@
    "links": {
     "bergfex": "https://www.bergfex.at/scheffau/",
     "radius_km": 14
+   },
+   "season": {
+    "open": "2026-12-05",
+    "close": "2027-04-11",
+    "source": "https://www.news.at/ausflugsziele/skisaison-2026-27-tirol-starttermine-skigebiete-ischgl-st-anton-kitzbuehel",
+    "confirmed": true,
+    "close_estimated": true,
+    "checked": "2026-11-17"
    }
   },
   {
@@ -39,6 +47,16 @@
    "links": {
     "bergfex": "https://www.bergfex.at/kitzbuehel-kirchberg/",
     "radius_km": 12
+   },
+   "season": {
+    "open": "2026-11-06",
+    "limited_until": "2026-11-26",
+    "close": "2027-04-18",
+    "source": "https://www.news.at/ausflugsziele/skisaison-2026-27-tirol-starttermine-skigebiete-ischgl-st-anton-kitzbuehel",
+    "confirmed": true,
+    "note": "Resterkogel only from 6 Nov; Hahnenkamm from 27 Nov",
+    "close_estimated": false,
+    "checked": "2026-11-17"
    }
   },
   {
@@ -56,7 +74,16 @@
     "snowcard_tirol"
    ],
    "travel_min": 95,
-   "links": {}
+   "links": {},
+   "season": {
+    "open": "2026-12-04",
+    "close": "2027-04-11",
+    "source": "https://all-inn.at/ski-opening-tirol/",
+    "confirmed": false,
+    "note": "sources give 28 Nov or 4 Dec",
+    "close_estimated": true,
+    "checked": "2026-11-17"
+   }
   },
   {
    "id": "steinplatte",
@@ -79,6 +106,14 @@
     "openskimap_names": [
      "Steinplatte"
     ]
+   },
+   "season": {
+    "open": "2026-12-05",
+    "close": "2027-04-11",
+    "confirmed": false,
+    "note": "no date published yet",
+    "close_estimated": true,
+    "checked": "2026-11-17"
    }
   },
   {
@@ -101,6 +136,14 @@
      "Fieberbrunn"
     ],
     "radius_km": 7
+   },
+   "season": {
+    "open": "2026-11-27",
+    "close": "2027-04-04",
+    "source": "https://www.news.at/regional/skisaison-salzburg-saisonstart-obertauern-saalbach-gastein",
+    "confirmed": true,
+    "close_estimated": false,
+    "checked": "2026-11-17"
    }
   },
   {
@@ -123,6 +166,14 @@
      "Inntal / Kufstein",
      "Achenpass"
     ]
+   },
+   "season": {
+    "open": "2026-12-04",
+    "close": "2027-04-11",
+    "source": "https://www.skiinfo.de/tirol/saisoneroeffnung-skigebiete",
+    "confirmed": false,
+    "close_estimated": true,
+    "checked": "2026-11-17"
    }
   },
   {
@@ -143,6 +194,14 @@
    "links": {
     "bergfex": "https://www.bergfex.at/zell-am-ziller/",
     "radius_km": 12
+   },
+   "season": {
+    "open": "2026-12-04",
+    "close": "2027-04-11",
+    "source": "https://all-inn.at/ski-opening-tirol/",
+    "confirmed": false,
+    "close_estimated": true,
+    "checked": "2026-11-17"
    }
   },
   {
@@ -167,6 +226,14 @@
      "Inntal / Kufstein",
      "Achenpass"
     ]
+   },
+   "season": {
+    "open": "2026-12-05",
+    "close": "2027-04-11",
+    "source": "https://all-inn.at/ski-opening-tirol/",
+    "confirmed": false,
+    "close_estimated": true,
+    "checked": "2026-11-17"
    }
   },
   {
@@ -190,6 +257,15 @@
      "Inntal / Kufstein",
      "Achenpass"
     ]
+   },
+   "season": {
+    "open": "2026-12-04",
+    "close": "2027-04-11",
+    "source": "https://all-inn.at/ski-opening-tirol/",
+    "confirmed": false,
+    "note": "Zillertal list date, not confirmed by the operator",
+    "close_estimated": true,
+    "checked": "2026-11-17"
    }
   },
   {
@@ -209,8 +285,12 @@
    "travel_min": 130,
    "glacier": true,
    "season": {
-    "open": "01-01",
-    "close": "12-31"
+    "open": "2026-10-02",
+    "close": "2027-07-18",
+    "source": "https://www.tirol.at/aktivitaeten/sport/skifahren/skigebiete/hintertuxer-gletscher",
+    "confirmed": true,
+    "close_estimated": false,
+    "checked": "2026-11-17"
    },
    "links": {
     "bergfex": "https://www.bergfex.at/hintertux/"
@@ -238,6 +318,14 @@
      "Stubaier Gletscher"
     ],
     "radius_km": 8
+   },
+   "season": {
+    "open": "2026-10-09",
+    "close": "2027-05-17",
+    "source": "https://www.stubaier-gletscher.com/en/winter/",
+    "confirmed": true,
+    "close_estimated": false,
+    "checked": "2026-11-17"
    }
   },
   {
@@ -260,6 +348,14 @@
      "Schlick"
     ],
     "radius_km": 7
+   },
+   "season": {
+    "open": "2026-11-21",
+    "close": "2027-04-11",
+    "source": "https://www.skiinfo.de/tirol/saisoneroeffnung-skigebiete",
+    "confirmed": false,
+    "close_estimated": true,
+    "checked": "2026-11-17"
    }
   },
   {
@@ -282,6 +378,15 @@
     "openskimap_names": [
      "Axamer Lizum"
     ]
+   },
+   "season": {
+    "open": "2026-11-21",
+    "close": "2027-04-11",
+    "source": "https://www.news.at/ausflugsziele/skisaison-2026-27-tirol-starttermine-skigebiete-ischgl-st-anton-kitzbuehel",
+    "confirmed": false,
+    "note": "depending on snow; sources give 20 or 21 Nov",
+    "close_estimated": true,
+    "checked": "2026-11-17"
    }
   },
   {
@@ -299,7 +404,15 @@
     "snowcard_tirol"
    ],
    "travel_min": 95,
-   "links": {}
+   "links": {},
+   "season": {
+    "open": "2026-12-05",
+    "close": "2027-04-11",
+    "confirmed": false,
+    "note": "no date published yet",
+    "close_estimated": true,
+    "checked": "2026-11-17"
+   }
   },
   {
    "id": "kuehtai",
@@ -316,7 +429,15 @@
     "snowcard_tirol"
    ],
    "travel_min": 120,
-   "links": {}
+   "links": {},
+   "season": {
+    "open": "2026-11-27",
+    "close": "2027-05-02",
+    "source": "https://www.news.at/ausflugsziele/skisaison-2026-27-tirol-starttermine-skigebiete-ischgl-st-anton-kitzbuehel",
+    "confirmed": true,
+    "close_estimated": false,
+    "checked": "2026-11-17"
+   }
   },
   {
    "id": "zugspitz-arena",
@@ -342,6 +463,14 @@
      "Zugspitz Arena"
     ],
     "radius_km": 10
+   },
+   "season": {
+    "open": "2026-11-27",
+    "close": "2027-04-11",
+    "source": "https://www.skiinfo.de/tirol/saisoneroeffnung-skigebiete",
+    "confirmed": false,
+    "close_estimated": true,
+    "checked": "2026-11-17"
    }
   },
   {
@@ -365,6 +494,15 @@
     "openskimap_names": [
      "Sölden"
     ]
+   },
+   "season": {
+    "open": "2026-10-01",
+    "close": "2027-05-02",
+    "source": "https://www.schneehoehen.de/artikel/5-tiroler-gletscher-laden-zum-saisonstart-2369",
+    "confirmed": false,
+    "note": "glacier since early October; winter area from 12 Nov",
+    "close_estimated": false,
+    "checked": "2026-11-17"
    }
   },
   {
@@ -384,6 +522,14 @@
    "travel_min": 170,
    "links": {
     "radius_km": 10
+   },
+   "season": {
+    "open": "2026-11-19",
+    "close": "2027-04-25",
+    "source": "https://www.news.at/ausflugsziele/skisaison-2026-27-tirol-starttermine-skigebiete-ischgl-st-anton-kitzbuehel",
+    "confirmed": true,
+    "close_estimated": false,
+    "checked": "2026-11-17"
    }
   },
   {
@@ -408,6 +554,14 @@
      "Pitztaler Gletscher",
      "Rifflsee"
     ]
+   },
+   "season": {
+    "open": "2026-09-26",
+    "close": "2027-05-02",
+    "source": "https://www.schneehoehen.de/artikel/5-tiroler-gletscher-laden-zum-saisonstart-2369",
+    "confirmed": true,
+    "close_estimated": false,
+    "checked": "2026-11-17"
    }
   },
   {
@@ -426,7 +580,15 @@
    ],
    "travel_min": 165,
    "glacier": true,
-   "links": {}
+   "links": {},
+   "season": {
+    "open": "2026-10-17",
+    "close": "2027-05-17",
+    "source": "https://www.schneehoehen.de/artikel/5-tiroler-gletscher-laden-zum-saisonstart-2369",
+    "confirmed": true,
+    "close_estimated": false,
+    "checked": "2026-11-17"
+   }
   },
   {
    "id": "serfaus-fiss-ladis",
@@ -446,6 +608,15 @@
    "links": {
     "bergfex": "https://www.bergfex.at/serfaus-fiss-ladis/",
     "radius_km": 10
+   },
+   "season": {
+    "open": "2026-12-04",
+    "limited_until": "2026-12-18",
+    "close": "2027-04-11",
+    "source": "https://all-inn.at/ski-opening-tirol/",
+    "confirmed": false,
+    "close_estimated": true,
+    "checked": "2026-11-17"
    }
   },
   {
@@ -466,6 +637,14 @@
    "links": {
     "bergfex": "https://www.bergfex.at/silvretta-arena-ischgl-samnaun/",
     "radius_km": 10
+   },
+   "season": {
+    "open": "2026-11-26",
+    "close": "2027-05-01",
+    "source": "https://www.news.at/ausflugsziele/skisaison-2026-27-tirol-starttermine-skigebiete-ischgl-st-anton-kitzbuehel",
+    "confirmed": true,
+    "close_estimated": false,
+    "checked": "2026-11-17"
    }
   },
   {
@@ -485,6 +664,14 @@
    "travel_min": 165,
    "links": {
     "radius_km": 12
+   },
+   "season": {
+    "open": "2026-12-02",
+    "close": "2027-04-25",
+    "source": "https://www.news.at/ausflugsziele/skisaison-2026-27-tirol-starttermine-skigebiete-ischgl-st-anton-kitzbuehel",
+    "confirmed": true,
+    "close_estimated": false,
+    "checked": "2026-11-17"
    }
   },
   {
@@ -508,6 +695,14 @@
      "Nauders"
     ],
     "radius_km": 10
+   },
+   "season": {
+    "open": "2026-12-11",
+    "close": "2027-04-11",
+    "confirmed": false,
+    "note": "only ticket portals mention 11 Dec",
+    "close_estimated": true,
+    "checked": "2026-11-17"
    }
   },
   {
@@ -527,6 +722,14 @@
    "travel_min": 210,
    "links": {
     "bergfex": "https://www.bergfex.at/matrei/"
+   },
+   "season": {
+    "open": "2026-12-05",
+    "close": "2027-04-11",
+    "source": "https://all-inn.at/ski-opening-tirol/",
+    "confirmed": true,
+    "close_estimated": true,
+    "checked": "2026-11-17"
    }
   },
   {
@@ -549,6 +752,14 @@
     "openskimap_names": [
      "Garmisch-Classic"
     ]
+   },
+   "season": {
+    "open": "2026-12-05",
+    "close": "2027-04-11",
+    "source": "https://www.bergfex.com/bayern/saisonstart/",
+    "confirmed": false,
+    "close_estimated": true,
+    "checked": "2026-11-17"
    }
   },
   {
@@ -568,8 +779,12 @@
    "travel_min": 80,
    "glacier": true,
    "season": {
-    "open": "11-15",
-    "close": "05-01"
+    "open": "2026-11-27",
+    "close": "2027-05-02",
+    "source": "https://zugspitze.de",
+    "confirmed": true,
+    "close_estimated": false,
+    "checked": "2026-11-17"
    },
    "links": {
     "radius_km": 5,
@@ -593,7 +808,15 @@
     "alpen_plus"
    ],
    "travel_min": 65,
-   "links": {}
+   "links": {},
+   "season": {
+    "open": "2026-11-28",
+    "close": "2027-04-11",
+    "source": "https://www.bergfex.com/bayern/saisonstart/",
+    "confirmed": false,
+    "close_estimated": true,
+    "checked": "2026-11-17"
+   }
   },
   {
    "id": "spitzingsee",
@@ -615,6 +838,14 @@
     "openskimap_names": [
      "Spitzingsee"
     ]
+   },
+   "season": {
+    "open": "2026-12-05",
+    "close": "2027-04-11",
+    "source": "https://www.muenchen.de/freizeit/skigebiete",
+    "confirmed": false,
+    "close_estimated": true,
+    "checked": "2026-11-17"
    }
   },
   {
@@ -632,7 +863,15 @@
     "alpen_plus"
    ],
    "travel_min": 55,
-   "links": {}
+   "links": {},
+   "season": {
+    "open": "2026-12-05",
+    "close": "2027-04-11",
+    "source": "https://www.muenchen.de/freizeit/skigebiete",
+    "confirmed": false,
+    "close_estimated": true,
+    "checked": "2026-11-17"
+   }
   },
   {
    "id": "nebelhorn",
@@ -654,6 +893,14 @@
     "openskimap_names": [
      "Nebelhorn"
     ]
+   },
+   "season": {
+    "open": "2026-12-12",
+    "close": "2027-04-11",
+    "source": "https://www.ok-bergbahnen.com",
+    "confirmed": true,
+    "close_estimated": true,
+    "checked": "2026-11-17"
    }
   },
   {
@@ -671,7 +918,15 @@
     "oberstdorf_kleinwalsertal"
    ],
    "travel_min": 145,
-   "links": {}
+   "links": {},
+   "season": {
+    "open": "2026-12-04",
+    "close": "2027-04-11",
+    "source": "https://www.ok-bergbahnen.com",
+    "confirmed": true,
+    "close_estimated": true,
+    "checked": "2026-11-17"
+   }
   },
   {
    "id": "jenner",
@@ -692,6 +947,14 @@
      "Jenner"
     ],
     "road_waypoints": []
+   },
+   "season": {
+    "open": "2026-12-18",
+    "close": "2027-04-11",
+    "source": "https://www.bergfex.com/bayern/saisonstart/",
+    "confirmed": false,
+    "close_estimated": true,
+    "checked": "2026-11-17"
    }
   },
   {
@@ -711,6 +974,14 @@
    "travel_min": 120,
    "links": {
     "radius_km": 12
+   },
+   "season": {
+    "open": "2026-11-27",
+    "close": "2027-04-04",
+    "source": "https://www.news.at/regional/skisaison-salzburg-saisonstart-obertauern-saalbach-gastein",
+    "confirmed": true,
+    "close_estimated": false,
+    "checked": "2026-11-17"
    }
   },
   {
@@ -728,7 +999,15 @@
     "alpin_card"
    ],
    "travel_min": 130,
-   "links": {}
+   "links": {},
+   "season": {
+    "open": "2026-12-04",
+    "close": "2027-04-11",
+    "source": "https://www.news.at/regional/skisaison-salzburg-saisonstart-obertauern-saalbach-gastein",
+    "confirmed": false,
+    "close_estimated": true,
+    "checked": "2026-11-17"
+   }
   },
   {
    "id": "kitzsteinhorn",
@@ -751,6 +1030,14 @@
     "openskimap_names": [
      "Kitzsteinhorn"
     ]
+   },
+   "season": {
+    "open": "2026-10-10",
+    "close": "2027-05-02",
+    "source": "https://www.news.at/regional/skisaison-salzburg-saisonstart-obertauern-saalbach-gastein",
+    "confirmed": true,
+    "close_estimated": false,
+    "checked": "2026-11-17"
    }
   },
   {
@@ -770,6 +1057,14 @@
    "travel_min": 130,
    "links": {
     "radius_km": 10
+   },
+   "season": {
+    "open": "2026-12-05",
+    "close": "2027-04-11",
+    "source": "https://www.news.at/regional/skisaison-salzburg-saisonstart-obertauern-saalbach-gastein",
+    "confirmed": false,
+    "close_estimated": true,
+    "checked": "2026-11-17"
    }
   },
   {
@@ -794,6 +1089,14 @@
      "Wagrain"
     ],
     "radius_km": 10
+   },
+   "season": {
+    "open": "2026-11-28",
+    "close": "2027-04-11",
+    "source": "https://www.news.at/regional/skisaison-salzburg-saisonstart-obertauern-saalbach-gastein",
+    "confirmed": false,
+    "close_estimated": true,
+    "checked": "2026-11-17"
    }
   },
   {
@@ -817,6 +1120,16 @@
      "Flachauwinkl"
     ],
     "radius_km": 8
+   },
+   "season": {
+    "open": "2026-11-27",
+    "limited_until": "2026-12-03",
+    "close": "2027-04-11",
+    "source": "https://www.news.at/regional/skisaison-salzburg-saisonstart-obertauern-saalbach-gastein",
+    "confirmed": false,
+    "note": "Gamskogel only until Flachauwinkl opens on 4 Dec",
+    "close_estimated": true,
+    "checked": "2026-11-17"
    }
   },
   {
@@ -837,6 +1150,15 @@
     "openskimap_names": [
      "Obertauern"
     ]
+   },
+   "season": {
+    "open": "2026-11-20",
+    "close": "2027-05-02",
+    "source": "https://www.news.at/regional/skisaison-salzburg-saisonstart-obertauern-saalbach-gastein",
+    "confirmed": false,
+    "note": "planned; lifts announced at short notice",
+    "close_estimated": false,
+    "checked": "2026-11-17"
    }
   },
   {
@@ -861,6 +1183,15 @@
      "Schlossalm"
     ],
     "radius_km": 10
+   },
+   "season": {
+    "open": "2026-11-27",
+    "limited_until": "2026-12-10",
+    "close": "2027-04-11",
+    "source": "https://www.news.at/regional/skisaison-salzburg-saisonstart-obertauern-saalbach-gastein",
+    "confirmed": false,
+    "close_estimated": true,
+    "checked": "2026-11-17"
    }
   }
  ]
