@@ -24,3 +24,4 @@ pipeline/.pytest_cache/
 # OS
 .DS_Store
 pipeline/recording/
+pipeline/archive/

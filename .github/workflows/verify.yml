@@ -1,0 +1,60 @@
+name: verify
+
+# Weekly forecast verification against station measurements, and on-demand
+# backtests of snowfall algorithms (docs/PLAN.md 6.2). Every pipeline run
+# also publishes verification.json; this workflow adds the weekly summary
+# and the backtest, which needs the weather service's history.
+
+on:
+  schedule:
+    - cron: "41 7 * * 1"
+  workflow_dispatch:
+    inputs:
+      command:
+        description: "score or backtest"
+        default: score
+      start:
+        description: "backtest: first target day (YYYY-MM-DD, at most 92 days back)"
+        default: ""
+      end:
+        description: "backtest: last target day"
+        default: ""
+      min_mid:
+        description: "only resorts with the mid band at or above this elevation (m)"
+        default: "0"
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: pipeline
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/checkout@v4
+        with:
+          ref: data
+          path: pipeline/archive
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: pipeline/requirements-dev.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: Score
+        if: github.event_name == 'schedule' || inputs.command == 'score'
+        run: python -m tools.verify score --archive archive --min-mid "${{ inputs.min_mid || 0 }}" --out out
+
+      - name: Backtest
+        if: inputs.command == 'backtest'
+        run: >
+          python -m tools.verify backtest --archive archive --start "${{ inputs.start }}" --end "${{ inputs.end }}"
+          --min-mid "${{ inputs.min_mid }}"

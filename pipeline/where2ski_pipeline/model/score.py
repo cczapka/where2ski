@@ -70,19 +70,30 @@ def travel_factor(travel_min: int | None) -> float:
     return clamp(1.0 - 0.6 * (travel_min - 60) / 90.0) if travel_min > 60 else 1.0
 
 
-def avalanche_factor(level: int | None) -> float:
-    if level is None:
-        return 0.7
-    return AVALANCHE_FACTOR.get(level, 0.0)
+AVALANCHE_NOTES = {
+    "out_of_season": "No avalanche bulletin is published yet. Off-piste conditions are unassessed.",
+    "no_rating": "The avalanche bulletin gives no rating for this region. Off-piste conditions are unassessed.",
+    "beyond_bulletin": "Beyond the bulletin: today's danger level carried forward, raised by one if the tendency is increasing.",
+    "fetch_failed": "The avalanche bulletin could not be loaded. Off-piste conditions are unassessed.",
+}
+
+
+def avalanche_factor(level: int | None, reason: str = "bulletin") -> float:
+    """Missing information is unknown, not neutral: it lowers the score."""
+    if level is not None:
+        return AVALANCHE_FACTOR.get(level, 0.0)
+    if reason == "fetch_failed":
+        return config.AVALANCHE_FETCH_FAILED
+    return config.AVALANCHE_OUT_OF_SEASON
 
 
 def build_factors(snow: SnowAssessment, weather: DayWeather, level: int | None, travel_min: int | None,
-                  crowd: float, roads: float = 1.0) -> dict:
+                  crowd: float, roads: float = 1.0, avalanche_reason: str = "bulletin") -> dict:
     return {
         "fresh_snow": round(fresh_snow_factor(snow), 3),
         "snow_quality_freeride": round(snow.value_freeride, 3),
         "snow_quality_piste": round(snow.value_piste, 3),
-        "avalanche": round(avalanche_factor(level), 3),
+        "avalanche": round(avalanche_factor(level, avalanche_reason), 3),
         "sun_vis": round(sun_vis_factor(weather), 3),
         "wind": round(wind_factor(weather), 3),
         "temperature": round(temperature_factor(weather), 3),
@@ -93,15 +104,29 @@ def build_factors(snow: SnowAssessment, weather: DayWeather, level: int | None, 
     }
 
 
-def blockers(mode: str, snow: SnowAssessment, weather: DayWeather, level: int | None, is_open: bool) -> list[str]:
+def freeride_base_min(mid_elevation: float) -> int:
+    return config.BASE_MIN_FREERIDE_ALPINE if mid_elevation >= config.ALPINE_MID_M else config.BASE_MIN_FREERIDE
+
+
+def blockers(mode: str, snow: SnowAssessment, weather: DayWeather, level: int | None, is_open: bool,
+             glacier: bool = False, mid_elevation: float = 0.0, glacier_top_hs: float | None = None) -> list[str]:
+    """Hard reasons not to go. On a glacier the piste base is ice and the operator decides, but off-piste
+    needs measured snow over the ice near the top band (crevasses)."""
     out = []
     if not is_open:
         out.append("resort closed (outside season)")
-    if snow.hs is not None:
+    if glacier:
+        if mode == "freeride":
+            if glacier_top_hs is None:
+                out.append("snow depth over the glacier ice is not measured")
+            elif glacier_top_hs < config.BASE_MIN_FREERIDE_GLACIER:
+                out.append(f"too little snow over glacier ice for off-piste: crevasses ({glacier_top_hs:.0f} cm)")
+    elif snow.hs is not None:
         if mode == "piste" and snow.hs < config.BASE_MIN_PISTE:
             out.append(f"base too thin ({snow.hs:.0f} cm)")
-        if mode == "freeride" and snow.hs < config.BASE_MIN_FREERIDE:
-            out.append(f"base too thin for off-piste ({snow.hs:.0f} cm)")
+        minimum = freeride_base_min(mid_elevation)
+        if mode == "freeride" and snow.hs < minimum:
+            out.append(f"base too thin for off-piste ({snow.hs:.0f} cm, needs {minimum})")
     if mode == "freeride" and level is not None and level >= 4:
         out.append(f"avalanche danger level {level}")
     if weather.precip_mm > 8 and snow.hn24 < 3 and (weather.t_mean_day_mid or 0) > 1:
@@ -142,10 +167,12 @@ def badges(snow: SnowAssessment, weather: DayWeather) -> list[str]:
     return out
 
 
-def confidence(lead: int, has_station: bool, has_bulletin: bool) -> float:
+def confidence(lead: int, has_station: bool, has_bulletin: bool, avalanche_reason: str = "bulletin") -> float:
     c = config.LEAD_CONFIDENCE[min(lead, len(config.LEAD_CONFIDENCE) - 1)]
     if not has_station:
         c *= 0.8
     if not has_bulletin:
         c *= 0.9
+    if avalanche_reason == "beyond_bulletin":
+        c *= config.BEYOND_BULLETIN_CONFIDENCE
     return round(c, 2)

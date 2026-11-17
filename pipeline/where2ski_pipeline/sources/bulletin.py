@@ -171,9 +171,19 @@ def _within_a_day(valid_date: str | None, date: str) -> bool:
         return False
 
 
+def _not_found(exc: Exception) -> bool:
+    """404 (or a recorded 404) means the file is not published, which is normal outside the season."""
+    resp = getattr(exc, "response", None)
+    if resp is not None and getattr(resp, "status_code", None) == 404:
+        return True
+    text = str(exc)
+    return "404" in text or "offline fixture missing" in text
+
+
 def fetch_bulletins(http: Http, region: str, date: str) -> tuple[dict[str, RegionBulletin], dict]:
     """Bulletins valid for ``date`` (YYYY-MM-DD) in ``region``; empty dict if none is available."""
-    status = {"region": region, "date": date, "ok": False, "url": None, "error": None, "regions": 0}
+    status = {"region": region, "date": date, "ok": False, "url": None, "error": None, "regions": 0,
+              "reason": "not_published"}
     for src in config.BULLETIN_SOURCES.get(region, []):
         url = src["url"].format(date=date)
         kind = src["kind"]
@@ -183,6 +193,8 @@ def fetch_bulletins(http: Http, region: str, date: str) -> tuple[dict[str, Regio
         except Exception as exc:  # noqa: BLE001
             status["error"] = f"{url}: {exc}"
             log.warning("bulletin %s failed: %s", url, exc)
+            if not _not_found(exc):
+                status["reason"] = "failed"
             continue
         if kind == "ratings":
             parsed = parse_ratings(data, source=url, valid_date=date)
@@ -199,7 +211,7 @@ def fetch_bulletins(http: Http, region: str, date: str) -> tuple[dict[str, Regio
                     status["error"] = f"{url}: stale, valid for {sample}"
                     parsed = {rid: b for rid, b in parsed.items() if rid not in stale}
         if parsed:
-            status.update(ok=True, url=url, error=None, regions=len(parsed))
+            status.update(ok=True, url=url, error=None, regions=len(parsed), reason="ok")
             return parsed, status
         status["error"] = status["error"] or f"{url}: no bulletins parsed"
     return {}, status

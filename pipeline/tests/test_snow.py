@@ -55,13 +55,13 @@ def test_station_values_override_today_only():
     assert b.hs_source == "station+forecast" and b.hn24 == 0
 
 
-def test_glacier_floor_and_model_depth():
+def test_no_glacier_floor_and_model_depth():
     mid = make_series(temp=lambda t: -5.0, snow_depth=lambda t: 0.4)
     top = make_series(temp=lambda t: -8.0)
     a = assess_day(mid, top, TODAY, TODAY)
     assert a.hs == 40 and a.hs_source == "model"
     g = assess_day(mid, top, TODAY, TODAY, glacier=True)
-    assert g.hs == 100 and g.hs_source == "glacier"
+    assert g.hs == 40 and g.hs_source == "model"  # base depth is what is measured or modelled, never a placeholder
 
 
 def test_day_weather_aggregates():

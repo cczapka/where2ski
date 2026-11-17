@@ -3,13 +3,14 @@
 from __future__ import annotations
 
 import json
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 
 import pytest
 
 from where2ski_pipeline.sources.openmeteo import HourlySeries
 
 TODAY = date(2026, 1, 15)
+NOW = datetime(2026, 1, 15, 7, 30, tzinfo=timezone.utc)  # run time: the fixture station reported at 06:00 UTC
 
 
 def make_series(today: date = TODAY, past_days: int = 10, forecast_days: int = 10, elevation: float = 1500,
@@ -60,9 +61,10 @@ STATIONS_GEOJSON = {
                         "HS": 1.12, "HSD_24": 0.18, "HSD_48": 0.24, "HSD_72": 0.30, "TA": 266.65, "TSS": 264.15,
                         "VW_MAX": 7.8, "VW": 3.0, "date": "2026-01-15T07:00:00+01:00"}},
         {"type": "Feature", "geometry": {"type": "Point", "coordinates": [11.05, 47.23]},
-         "properties": {"name": "Far Too High", "altitude": 2950, "HS": "0.6", "TA": "261.15", "HSD_24": -0.03}},
+         "properties": {"name": "Far Too High", "altitude": 2950, "HS": "0.6", "TA": "261.15", "HSD_24": -0.03,
+                        "date": "2026-01-15T06:00:00Z"}},
         {"type": "Feature", "geometry": {"type": "Point", "coordinates": [12.5, 47.5]},
-         "properties": {"name": "Other Valley", "altitude": 1500, "HS": 0.4, "TA": 271.15}},
+         "properties": {"name": "Other Valley", "altitude": 1500, "HS": 0.4, "TA": 271.15, "date": "2026-01-15T06:10:00Z"}},
     ],
 }
 

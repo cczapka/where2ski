@@ -4,7 +4,7 @@ import pytest
 
 from where2ski_pipeline.http import Http, RecordedError
 from where2ski_pipeline.run import RUN_META, run
-from .conftest import TODAY
+from .conftest import NOW, TODAY
 
 
 def _strip(latest):
@@ -13,7 +13,7 @@ def _strip(latest):
 
 def test_recorded_run_replays_identically(registry_path, offline_dir, tmp_path):
     rec = tmp_path / "rec"
-    first = run(registry=registry_path, out_dir=tmp_path / "a", offline_dir=offline_dir, today=TODAY, record_dir=rec)
+    first = run(registry=registry_path, out_dir=tmp_path / "a", offline_dir=offline_dir, today=TODAY, now=NOW, record_dir=rec)
     meta = json.loads((rec / RUN_META).read_text())
     assert meta["today"] == TODAY.isoformat()
     # replay without --today: date and run time come from the recording

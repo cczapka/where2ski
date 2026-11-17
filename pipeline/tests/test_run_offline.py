@@ -1,12 +1,12 @@
 import json
 
 from where2ski_pipeline.run import run
-from .conftest import TODAY
+from .conftest import NOW, TODAY
 
 
 def test_end_to_end_offline(registry_path, offline_dir, tmp_path):
     out = tmp_path / "out"
-    latest = run(registry=registry_path, out_dir=out, offline_dir=offline_dir, today=TODAY)
+    latest = run(registry=registry_path, out_dir=out, offline_dir=offline_dir, today=TODAY, now=NOW)
 
     assert (out / "latest.json").exists() and (out / "resorts.json").exists() and (out / "index.html").exists()
     reloaded = json.loads((out / "latest.json").read_text(encoding="utf-8"))
@@ -32,7 +32,14 @@ def test_end_to_end_offline(registry_path, offline_dir, tmp_path):
     assert today["roads"]["snowfall_cm"] == 9.0  # 6 morning hours at 1.5 cm/h on the worst pass
     assert today["factors"]["roads"] < 0.6
     assert today["blockers"] == {"freeride": [], "piste": []}
-    assert k["days"][2]["avalanche"] is None  # bulletin only for the first two days
+    # beyond the bulletin: today's level carried forward, with lower confidence and a note
+    d2 = k["days"][2]
+    assert d2["avalanche_reason"] == "beyond_bulletin" and d2["avalanche"]["carried_forward"]
+    assert d2["avalanche"]["level_top"] == 3 and d2["avalanche_note"]
+    assert today["avalanche_reason"] == "bulletin" and today["avalanche_note"] is None
+    st = k["stations"][0]
+    assert st["age_h"] == 1.5 and st["stale"] is False and st["rejected"] == []
+    assert reloaded["schema_version"] == 2 and reloaded["status"]["warnings"] == []
 
     s = by_id["sudelfeld"]
     assert s["stations"] == []

@@ -21,6 +21,8 @@ def main(argv=None) -> int:
     p.add_argument("--offline", default=None, help="directory with fixture responses instead of network access")
     p.add_argument("--record", default=None,
                    help="write every raw response into this directory; replay it later with --offline")
+    p.add_argument("--archive", default=None,
+                   help="archive directory (checkout of the data branch): read yesterday's readings, append today's rows")
     p.add_argument("--today", default=None, help="override today's date (YYYY-MM-DD)")
     p.add_argument("--now", default=None, help="override the run time (ISO 8601 with offset)")
     p.add_argument("--only", nargs="*", default=None, help="restrict to these resort ids")
@@ -38,7 +40,12 @@ def main(argv=None) -> int:
         only=args.only,
         record_dir=Path(args.record) if args.record else None,
         now=datetime.fromisoformat(args.now) if args.now else None,
+        archive_dir=Path(args.archive) if args.archive else None,
     )
+    for warning in latest["status"].get("warnings", []):
+        print(f"::warning::{warning}")
+    if latest["status"].get("archive"):
+        print("archive rows written:", latest["status"]["archive"])
     errors = [r["id"] for r in latest["resorts"] if r.get("error")]
     print(f"resorts: {len(latest['resorts'])}, errors: {len(errors)} {errors}")
     print("sources:", latest["status"]["sources"])

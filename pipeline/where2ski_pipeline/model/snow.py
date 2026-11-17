@@ -194,9 +194,6 @@ def assess_day(mid: HourlySeries, top: HourlySeries, day: date, today: date,
         if depth_m is not None:
             hs = round(depth_m * 100.0, 1)
             hs_source = "model"
-    if glacier and (hs is None or hs < 100):
-        hs = max(hs or 0.0, 100.0)
-        hs_source = "glacier"
 
     last_end = last_snowfall_end(mid, noon)
     since = last_end if last_end is not None else noon - timedelta(days=10)
@@ -320,6 +317,8 @@ class DayWeather:
     gust_max_top: float | None
     precip_mm: float
     snowfall_cm: float
+    snowfall_base_cm: float
+    snowfall_top_cm: float
     low_cloud_pct: float | None
     low_cloud_base_pct: float | None
     freezing_level_m: float | None
@@ -337,6 +336,8 @@ class DayWeather:
             "gust_max_top": r(self.gust_max_top, 0),
             "precip_mm": round(self.precip_mm, 1),
             "snowfall_cm": round(self.snowfall_cm, 1),
+            "snowfall_base_cm": round(self.snowfall_base_cm, 1),
+            "snowfall_top_cm": round(self.snowfall_top_cm, 1),
             "low_cloud_pct": r(self.low_cloud_pct, 0),
             "low_cloud_base_pct": r(self.low_cloud_base_pct, 0),
             "freezing_level_m": r(self.freezing_level_m, 0),
@@ -358,6 +359,8 @@ def day_weather(base: HourlySeries, mid: HourlySeries, top: HourlySeries, day: d
         gust_max_top=_max(top.slice("wind_gusts_10m", ds + timedelta(hours=8), ds + timedelta(hours=17))),
         precip_mm=_sum(mid.slice("precipitation", ds, de)),
         snowfall_cm=_sum(mid.slice("snowfall", ds, de)),
+        snowfall_base_cm=_sum(base.slice("snowfall", ds, de)),
+        snowfall_top_cm=_sum(top.slice("snowfall", ds, de)),
         low_cloud_pct=_mean(mid.slice("cloud_cover_low", core_s, core_e)),
         low_cloud_base_pct=_mean(base.slice("cloud_cover_low", core_s, core_e)),
         freezing_level_m=_mean(mid.slice("freezing_level_height", core_s, core_e)),

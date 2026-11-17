@@ -47,8 +47,22 @@ jobs:
           restore-keys: |
             pipeline-cache-
 
+      - name: Check out the forecast archive (data branch)
+        run: |
+          if git fetch --depth=1 origin data:refs/remotes/origin/data 2>/dev/null; then
+            git worktree add --detach archive origin/data
+          else
+            echo "data branch missing: creating it from the stored snapshots"
+            git worktree add --orphan -b data archive
+            python -m tools.snapshots_to_archive data/snapshots archive
+          fi
+          ls -la archive
+
       - name: Run pipeline
-        run: python -m where2ski_pipeline run --registry data/resorts.json --out out --cache cache --record recording -v
+        run: python -m where2ski_pipeline run --registry data/resorts.json --out out --cache cache --record recording --archive archive -v
+
+      - name: Verification against stations
+        run: python -m tools.verify score --archive archive --out out
 
       - name: Show summary
         run: |
@@ -81,21 +95,29 @@ jobs:
                   print(r["name"], "ERROR", r.get("error"))
           PY
 
-      - name: Store daily station snapshot
-        if: github.event_name != 'pull_request'
+      - name: Push the forecast archive
+        if: github.event_name != 'pull_request' && github.ref_name == github.event.repository.default_branch
+        working-directory: pipeline/archive
         run: |
-          day=$(python -c "import json;print(json.load(open('out/snapshot.json'))['date'])")
-          mkdir -p data/snapshots
-          f="data/snapshots/${day}.json"
-          if [ -f "$f" ]; then
-            echo "snapshot for ${day} already stored"
+          git add -A .
+          if git diff --cached --quiet; then
+            echo "archive unchanged"
             exit 0
           fi
-          cp out/snapshot.json "$f"
+          git -c user.name="where2ski-bot" -c user.email="actions@users.noreply.github.com" \
+            commit -q -m "Archive $(date -u +%F' '%H:%M) UTC"
+          git push origin HEAD:refs/heads/data
+
+      - name: Monthly date stamp (keeps the scheduled workflow enabled)
+        if: github.event_name != 'pull_request' && github.ref_name == github.event.repository.default_branch
+        run: |
+          month=$(date -u +%Y-%m)
+          if [ "$(cat data/last_run_month.txt 2>/dev/null)" = "$month" ]; then exit 0; fi
+          echo "$month" > data/last_run_month.txt
           git config user.name "where2ski-bot"
           git config user.email "actions@users.noreply.github.com"
-          git add "$f"
-          git commit -m "Store station snapshot ${day}"
+          git add data/last_run_month.txt
+          git commit -q -m "Pipeline still running: ${month}"
           git pull --rebase origin "${GITHUB_REF_NAME}" || true
           git push origin "HEAD:${GITHUB_REF_NAME}"
 
@@ -115,6 +137,7 @@ jobs:
 
   deploy:
     needs: build
+    if: github.ref_name == github.event.repository.default_branch
     runs-on: ubuntu-latest
     environment:
       name: github-pages

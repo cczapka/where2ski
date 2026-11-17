@@ -54,6 +54,21 @@ HOURLY_VARS = [
 STATION_MAX_KM = 10.0
 STATION_MAX_DZ = 400.0
 STATION_MAX_COUNT = 3
+# Readings older than this are not used. Normal age is 0.3-1 h for every
+# operator (snapshots Sep-Nov 2026); runs are 3 h apart.
+STATION_MAX_AGE_H = 3.0
+STALE_WARNING_SHARE = 0.5  # warn when more than half of all stations with readings are stale
+
+# Station quality control (docs/PLAN.md 5.2). Starting values from the review.
+QC_HS_MAX_CM = 600.0          # snow height outside 0..600 cm is dropped
+QC_HN24_MAX_CM = 150.0        # a 24 h change above this is dropped outright
+QC_HN24_CONFIRM_CM = 60.0     # above this, another mapped station must confirm ...
+QC_HN24_SUPPORT_CM = 30.0     # ... with at least this much
+QC_HS_JUMP_CM = 60.0          # day-to-day jump in snow height, unless the forecast had ...
+QC_JUMP_PRECIP_MM = 20.0      # ... at least this much precipitation in 24 h
+QC_BARE_HS_CM = 60.0          # below this, with air above QC_BARE_T_AIR and no modelled snow,
+QC_BARE_T_AIR = 8.0           # the sensor reads vegetation: set to 0 (Saalbach, October 2026)
+GLACIER_STATION_MAX_DZ = 250.0  # a glacier depth measurement must lie this close to the top band
 
 # Scoring weights (see docs/CONCEPT.md §6). Values are relative.
 WEIGHTS = {
@@ -85,7 +100,18 @@ WEIGHTS = {
 
 # Base depth thresholds in cm.
 BASE_MIN_PISTE = 30
-BASE_MIN_FREERIDE = 60
+BASE_MIN_FREERIDE = 60          # mid band below 2000 m: meadows and forest floor
+BASE_MIN_FREERIDE_ALPINE = 80   # mid band at or above 2000 m: rock and scree
+BASE_MIN_FREERIDE_GLACIER = 120  # measured near the top band; crevasses (decision of 16 Nov 2026)
+ALPINE_MID_M = 2000
+GLACIER_THIN_PISTE_FACTOR = 0.8  # piste quality on a glacier with less than BASE_MIN_PISTE natural snow
+
+# Avalanche factor when no rating applies (docs/PLAN.md 5.4)
+AVALANCHE_OUT_OF_SEASON = 0.4
+AVALANCHE_FETCH_FAILED = 0.5
+BEYOND_BULLETIN_CONFIDENCE = 0.8
+
+LIMITED_OPENING_PISTE = 0.6  # piste score multiplier between season open and limited_until
 
 LEAD_CONFIDENCE = [1.0, 0.95, 0.85, 0.7, 0.6, 0.5, 0.4, 0.35, 0.3, 0.25]
 

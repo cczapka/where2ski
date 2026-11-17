@@ -13,7 +13,7 @@ def snow(**kw):
 
 def weather(**kw):
     base = dict(sun_hours=7, t_min_mid=-10, t_max_mid=-3, t_mean_day_mid=-5, t_mean_day_top=-8, t_mean_day_base=-1,
-                gust_max_top=20, precip_mm=0, snowfall_cm=0, low_cloud_pct=10, low_cloud_base_pct=10,
+                gust_max_top=20, precip_mm=0, snowfall_cm=0, snowfall_base_cm=0, snowfall_top_cm=0, low_cloud_pct=10, low_cloud_base_pct=10,
                 freezing_level_m=800, visibility_m=30000)
     base.update(kw)
     return DayWeather(**base)
@@ -40,7 +40,9 @@ def test_factor_shapes():
     assert sc.temperature_factor(weather(t_mean_day_mid=8)) == 0.0
     assert sc.temperature_factor(weather(t_mean_day_mid=-20)) == 0.2
     assert sc.travel_factor(60) == 1.0 and sc.travel_factor(150) == 0.4
-    assert sc.avalanche_factor(None) == 0.7
+    assert sc.avalanche_factor(None, "out_of_season") == 0.4  # unknown, not neutral
+    assert sc.avalanche_factor(None, "fetch_failed") == 0.5
+    assert sc.avalanche_factor(2, "beyond_bulletin") == 0.8
     assert sc.sun_vis_factor(weather(sun_hours=0, low_cloud_pct=100)) == 0.0
 
 
