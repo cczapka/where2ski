@@ -34,6 +34,7 @@ fun badgeLabel(badge: String): String = when (badge) {
     "inversion" -> "Sun above fog"
     "corn_morning" -> "Corn morning"
     "storm_skiing" -> "Storm skiing"
+    "limited_opening" -> "Limited opening"
     else -> badge
 }
 
@@ -45,4 +46,30 @@ fun passLabel(pass: String): String = when (pass) {
     "garmisch" -> "Garmisch"
     "oberstdorf_kleinwalsertal" -> "Oberstdorf/Kleinwalsertal"
     else -> pass
+}
+
+fun hsSourceLabel(source: String): String = when (source) {
+    "station" -> "measured"
+    "station+forecast" -> "measured, plus forecast snowfall"
+    "model" -> "weather model, not measured"
+    "none" -> "unknown"
+    else -> source
+}
+
+fun fmtAge(hours: Double?): String = when {
+    hours == null -> "time unknown"
+    hours < 1.0 -> "${(hours * 60).roundToInt()} min ago"
+    hours < 48.0 -> "${hours.roundToInt()} h ago"
+    else -> "${(hours / 24).roundToInt()} days ago"
+}
+
+fun ruleLabel(rule: String): String = when (rule) {
+    "stale" -> "reading too old"
+    "limit" -> "outside 0–600 cm"
+    "limit_24h" -> "jump of more than 150 cm in 24 h"
+    "agreement" -> "large new snow not confirmed by another station"
+    "continuity" -> "jump against yesterday without precipitation"
+    "bare_ground" -> "sensor reads bare ground (warm, no modelled snow)"
+    "excluded" -> "station excluded for this resort"
+    else -> rule
 }

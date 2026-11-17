@@ -15,6 +15,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -70,7 +71,26 @@ fun RankingScreen(
                 modifier = Modifier.padding(16.dp),
             )
         } else {
+            DataWarnings(latest.status.warnings)
             RankingList(latest, settings, selectedDay, onSelectDay, onOpenResort)
+        }
+    }
+}
+
+/** Shown when the pipeline flagged its inputs: a frozen station feed, a failed bulletin download. */
+@Composable
+private fun DataWarnings(warnings: List<String>) {
+    if (warnings.isEmpty()) return
+    Card(
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp, vertical = 4.dp),
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            warnings.forEach {
+                Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onErrorContainer)
+            }
         }
     }
 }
@@ -121,7 +141,7 @@ private fun RankingCard(item: RankedResort, mode: Mode, onClick: () -> Unit) {
                         if (bs != null && bs.state != d.snow.state) append(" · $best: ${stateLabel(bs.state)}")
                     }
                     append(" · new ${fmtCm(d.snow.hn24)} / 72 h ${fmtCm(d.snow.hn72)}")
-                    if (d.snow.hs != null) append(" · base ${fmtCm(d.snow.hs)}")
+                    if (d.snow.hs != null) append(" · base ${fmtCm(d.snow.hs)}" + if (d.snow.hsSource == "model") " (model)" else "")
                 }
                 Text(line1, style = MaterialTheme.typography.bodySmall)
                 val line2 = buildString {

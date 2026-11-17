@@ -36,6 +36,8 @@ import app.where2ski.data.DayConditions
 import app.where2ski.data.Latest
 import app.where2ski.data.Mode
 import app.where2ski.data.ResortConditions
+import app.where2ski.data.SeasonInfo
+import app.where2ski.data.StationInfo
 import app.where2ski.data.Scoring
 import app.where2ski.data.TripLogStore
 import app.where2ski.data.UserSettings
@@ -95,6 +97,7 @@ private fun ResortDetails(resort: ResortConditions, day: DayConditions?, setting
                 (if (resort.passes.isNotEmpty()) " · " + resort.passes.joinToString { passLabel(it) } else ""),
             style = MaterialTheme.typography.bodySmall,
         )
+        resort.season?.let { season -> SeasonLine(season) }
         if (day == null) {
             Text("No assessment for this day.", modifier = Modifier.padding(top = 12.dp))
         } else {
@@ -136,7 +139,14 @@ private fun DayDetails(resort: ResortConditions, day: DayConditions, settings: U
         if (bs != null) KeyValue("Best aspect", "$best · ${stateLabel(bs.state)} · ${(bs.share * 100).toInt()} % of terrain")
     }
     KeyValue("New snow 24 / 48 / 72 h", "${fmtCm(day.snow.hn24)} / ${fmtCm(day.snow.hn48)} / ${fmtCm(day.snow.hn72)}")
-    KeyValue("Base depth", "${fmtCm(day.snow.hs)} (${day.snow.hsSource})")
+    KeyValue("Base depth", "${fmtCm(day.snow.hs)} (${hsSourceLabel(day.snow.hsSource)})")
+    if (resort.glacier) {
+        KeyValue(
+            "Snow over the glacier ice",
+            day.glacierTopHs?.let { "${fmtCm(it)} near the top" + (resort.glacierStation?.let { s -> " (${s.name})" } ?: "") }
+                ?: "not measured near the top",
+        )
+    }
     KeyValue("Days since snowfall", day.snow.daysSinceSnow?.let { "%.0f".format(it) } ?: "> 10")
     KeyValue("Hours above 0 °C since", day.snow.meltHours.toString())
     KeyValue("Melt-freeze cycles", day.snow.cycles.toString())
@@ -176,10 +186,15 @@ private fun DayDetails(resort: ResortConditions, day: DayConditions, settings: U
 
     SectionTitle("Avalanche")
     val av = day.avalanche
+    day.avalancheNote?.let {
+        Text(it, style = MaterialTheme.typography.bodySmall, color = if (av == null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface)
+    }
     if (av == null) {
-        Text("No bulletin for this day (bulletins cover today and tomorrow).", style = MaterialTheme.typography.bodySmall)
+        if (day.avalancheNote == null) {
+            Text("No bulletin for this day.", style = MaterialTheme.typography.bodySmall)
+        }
     } else {
-        KeyValue("Danger mid / top", "${av.levelMid ?: "–"} / ${av.levelTop ?: "–"}")
+        KeyValue("Danger mid / top" + if (av.carriedForward) " (carried forward)" else "", "${av.levelMid ?: "–"} / ${av.levelTop ?: "–"}")
         av.tendency?.let { KeyValue("Tendency", it) }
         av.region?.let { KeyValue("Region", it) }
         av.problems.forEach { p ->
@@ -209,12 +224,12 @@ private fun DayDetails(resort: ResortConditions, day: DayConditions, settings: U
     }
     if (resort.stations.isNotEmpty()) {
         SectionTitle("Nearby stations")
-        resort.stations.forEach { s ->
-            Text(
-                "${s.name} (${s.elevation?.toInt() ?: "?"} m, ${s.distanceKm ?: "?"} km): HS ${fmtCm(s.hs)}, 24 h ${fmtCm(s.hn24)}, T ${fmtTemp(s.tAir)}" +
-                    (s.tSurface?.let { ", surface ${fmtTemp(it)}" } ?: ""),
-                style = MaterialTheme.typography.bodySmall,
-            )
+        resort.stations.forEach { s -> StationLine(s) }
+    }
+    resort.glacierStation?.let { g ->
+        if (resort.stations.none { it.name == g.name }) {
+            SectionTitle("Station near the glacier top")
+            StationLine(g)
         }
     }
 
@@ -225,4 +240,39 @@ private fun DayDetails(resort: ResortConditions, day: DayConditions, settings: U
         }
     }
     Spacer(Modifier.padding(12.dp))
+}
+
+@Composable
+private fun SeasonLine(season: SeasonInfo) {
+    val open = season.open?.let(::dayLabel) ?: "?"
+    val close = season.close?.let(::dayLabel) ?: "?"
+    val text = buildString {
+        append("Season $open – $close")
+        if (season.closeEstimated) append(" (end estimated)")
+        season.limitedUntil?.let { append(" · limited opening until ${dayLabel(it)}") }
+        if (!season.confirmed) append(" · dates not confirmed by the operator")
+        season.note?.let { append(" · $it") }
+    }
+    Text(text, style = MaterialTheme.typography.bodySmall)
+}
+
+@Composable
+private fun StationLine(s: StationInfo) {
+    val head = "${s.name} (${s.elevation?.toInt() ?: "?"} m" + (s.distanceKm?.let { ", $it km" } ?: "") + ", ${fmtAge(s.ageH)})"
+    if (s.stale) {
+        Text("$head: reading too old, not used", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+        return
+    }
+    Text(
+        "$head: HS ${fmtCm(s.hs)}, 24 h ${fmtCm(s.hn24)}, T ${fmtTemp(s.tAir)}" + (s.tSurface?.let { ", surface ${fmtTemp(it)}" } ?: ""),
+        style = MaterialTheme.typography.bodySmall,
+    )
+    s.rejected.filter { it.rule != "stale" }.distinctBy { it.rule }.forEach { r ->
+        val fields = s.rejected.filter { it.rule == r.rule }.joinToString { "${it.field} ${it.value ?: "?"}" }
+        Text(
+            "   not used: $fields, ${ruleLabel(r.rule)}",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.error,
+        )
+    }
 }

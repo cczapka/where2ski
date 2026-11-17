@@ -82,4 +82,49 @@ class ScoringTest {
         val wrongPass = rank(latest, 0, Mode.FREERIDE, Scoring.defaultWeights.getValue(Mode.FREERIDE), setOf("ski_amade"), 0)
         assertTrue(wrongPass.isEmpty())
     }
+
+    private val sampleV2 = """
+        {
+          "schema_version": 2, "generated_at": "2026-11-17T06:17:00+00:00", "today": "2026-11-17",
+          "days": ["2026-11-17"],
+          "status": {"warnings": ["Station data is stale: 92% of stations have not reported for more than 3 h."]},
+          "resorts": [
+            {"id": "kitzbuehel", "name": "KitzSki", "glacier": false,
+             "season": {"open": "2026-11-06", "close": "2027-04-18", "limited_until": "2026-11-26", "confirmed": true,
+                        "source": "https://example.org"},
+             "stations": [
+               {"name": "Frozen", "elevation": 1800, "age_h": 114.2, "stale": true,
+                "rejected": [{"field": "hs", "value": 27.0, "rule": "stale"}]},
+               {"name": "Spike", "elevation": 2565, "age_h": 2.1, "stale": false, "hs": null,
+                "rejected": [{"field": "hs", "value": 278.0, "rule": "limit_24h"}]}
+             ],
+             "days": [
+               {"date": "2026-11-17", "lead": 0, "blockers": {"freeride": [], "piste": []},
+                "factors": {"fresh_snow": 1.0, "snow_quality_piste": 1.0, "sun_vis": 1.0, "wind": 1.0, "temperature": 1.0,
+                            "base": 1.0, "travel": 1.0, "crowd": 1.0, "roads": 1.0, "avalanche": 0.4},
+                "limited_opening": true, "avalanche": null, "avalanche_reason": "out_of_season",
+                "avalanche_note": "No avalanche bulletin is published yet. Off-piste conditions are unassessed.",
+                "badges": ["limited_opening"], "snow": {"state": "hardpack", "hs": 40, "hs_source": "model"}}
+             ]}
+          ]
+        }
+    """.trimIndent()
+
+    @Test
+    fun decodesSchemaVersion2AndAppliesLimitedOpening() {
+        val latest = json.decodeFromString<Latest>(sampleV2)
+        assertEquals(2, latest.schemaVersion)
+        assertEquals(1, latest.status.warnings.size)
+        val r = latest.resorts.single()
+        assertEquals("2026-11-26", r.season?.limitedUntil)
+        assertTrue(r.stations[0].stale)
+        assertEquals("limit_24h", r.stations[1].rejected.single().rule)
+        val day = r.days.single()
+        assertEquals("out_of_season", day.avalancheReason)
+        assertTrue(day.avalancheNote!!.startsWith("No avalanche bulletin"))
+        // all piste factors at 1.0 give 100, a limited opening takes it to 60
+        assertEquals(60.0, Scoring.score(Mode.PISTE, day, Scoring.defaultWeights.getValue(Mode.PISTE)), 1e-6)
+        // freeride is not discounted; avalanche 0.4 out of season lowers it
+        assertTrue(Scoring.score(Mode.FREERIDE, day, Scoring.defaultWeights.getValue(Mode.FREERIDE)) < 100.0)
+    }
 }

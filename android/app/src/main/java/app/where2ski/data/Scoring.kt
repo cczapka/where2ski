@@ -55,8 +55,12 @@ object Scoring {
             total += w * v
             wsum += w
         }
-        return if (wsum > 0.0) 100.0 * total / wsum else 0.0
+        val raw = if (wsum > 0.0) 100.0 * total / wsum else 0.0
+        // a few lifts only: same discount as the pipeline (config.LIMITED_OPENING_PISTE)
+        return if (mode == Mode.PISTE && day.limitedOpening) raw * LIMITED_OPENING_PISTE else raw
     }
+
+    const val LIMITED_OPENING_PISTE = 0.6
 }
 
 data class RankedResort(val resort: ResortConditions, val day: DayConditions, val score: Double)

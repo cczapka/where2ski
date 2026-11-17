@@ -9,12 +9,32 @@ import kotlinx.serialization.json.jsonPrimitive
 /** Mirror of pipeline/out/latest.json. Unknown keys are ignored when decoding. */
 @Serializable
 data class Latest(
+    @SerialName("schema_version") val schemaVersion: Int = 1,
     @SerialName("generated_at") val generatedAt: String = "",
     val today: String = "",
     val days: List<String> = emptyList(),
     val weights: Map<String, Map<String, Double>> = emptyMap(),
     val attribution: List<String> = emptyList(),
     val resorts: List<ResortConditions> = emptyList(),
+    val status: StatusInfo = StatusInfo(),
+)
+
+/** Data-quality warnings of the run, e.g. a frozen station feed or a failed bulletin download. */
+@Serializable
+data class StatusInfo(val warnings: List<String> = emptyList())
+
+@Serializable
+data class RejectedValue(val field: String = "", val value: Double? = null, val rule: String = "")
+
+@Serializable
+data class SeasonInfo(
+    val open: String? = null,
+    val close: String? = null,
+    val source: String? = null,
+    val confirmed: Boolean = false,
+    @SerialName("close_estimated") val closeEstimated: Boolean = false,
+    @SerialName("limited_until") val limitedUntil: String? = null,
+    val note: String? = null,
 )
 
 @Serializable
@@ -33,6 +53,9 @@ data class StationInfo(
     val gust: Double? = null,
     val time: String? = null,
     @SerialName("distance_km") val distanceKm: Double? = null,
+    @SerialName("age_h") val ageH: Double? = null,
+    val stale: Boolean = false,
+    val rejected: List<RejectedValue> = emptyList(),
 )
 
 @Serializable
@@ -52,6 +75,8 @@ data class ResortConditions(
     val terrain: TerrainInfo? = null,
     @SerialName("station_history") val stationHistory: StationHistoryInfo? = null,
     val stations: List<StationInfo> = emptyList(),
+    @SerialName("glacier_station") val glacierStation: StationInfo? = null,
+    val season: SeasonInfo? = null,
     val days: List<DayConditions> = emptyList(),
     val error: String? = null,
 ) {
@@ -70,6 +95,10 @@ data class DayConditions(
     val snow: SnowInfo = SnowInfo(),
     val weather: WeatherInfo = WeatherInfo(),
     val avalanche: AvalancheInfo? = null,
+    @SerialName("avalanche_reason") val avalancheReason: String? = null,
+    @SerialName("avalanche_note") val avalancheNote: String? = null,
+    @SerialName("limited_opening") val limitedOpening: Boolean = false,
+    @SerialName("glacier_top_hs") val glacierTopHs: Double? = null,
     val roads: RoadInfo? = null,
 )
 
@@ -135,6 +164,8 @@ data class WeatherInfo(
     @SerialName("gust_max_top") val gustMaxTop: Double? = null,
     @SerialName("precip_mm") val precipMm: Double = 0.0,
     @SerialName("snowfall_cm") val snowfallCm: Double = 0.0,
+    @SerialName("snowfall_base_cm") val snowfallBaseCm: Double? = null,
+    @SerialName("snowfall_top_cm") val snowfallTopCm: Double? = null,
     @SerialName("low_cloud_pct") val lowCloudPct: Double? = null,
     @SerialName("freezing_level_m") val freezingLevelM: Double? = null,
 )
@@ -153,4 +184,5 @@ data class AvalancheInfo(
     val problems: List<AvalancheProblem> = emptyList(),
     val tendency: String? = null,
     val region: String? = null,
+    @SerialName("carried_forward") val carriedForward: Boolean = false,
 )
