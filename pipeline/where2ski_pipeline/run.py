@@ -132,13 +132,25 @@ def assess_resort(resort: Resort, http: Http, today: date, days: list[date], sta
     return result
 
 
+RUN_META = "_run.json"  # written next to recorded responses so a replay uses the same clock
+
+
 def run(registry: Path, out_dir: Path, cache_dir: Path | None = None, offline_dir: Path | None = None,
-        today: date | None = None, only: list[str] | None = None) -> dict:
-    http = Http(cache_dir=cache_dir, offline_dir=offline_dir)
+        today: date | None = None, only: list[str] | None = None, record_dir: Path | None = None,
+        now: datetime | None = None) -> dict:
+    http = Http(cache_dir=cache_dir, offline_dir=offline_dir, record_dir=record_dir)
     resorts = load_resorts(registry)
     if only:
         resorts = [r for r in resorts if r.id in set(only)]
-    today = today or datetime.now(ZoneInfo(config.TIMEZONE)).date()
+    recorded = {}
+    if offline_dir is not None and (Path(offline_dir) / RUN_META).exists():
+        recorded = json.loads((Path(offline_dir) / RUN_META).read_text(encoding="utf-8"))
+        http.last_modified.update(recorded.get("last_modified", {}))
+    if now is None:
+        now = datetime.fromisoformat(recorded["now"]) if recorded.get("now") else datetime.now(timezone.utc)
+    if today is None:
+        today = date.fromisoformat(recorded["today"]) if recorded.get("today") else \
+            now.astimezone(ZoneInfo(config.TIMEZONE)).date()
     days = [today + timedelta(days=i) for i in range(config.FORECAST_DAYS)]
     status: dict = {"sources": {}}
 
@@ -187,7 +199,7 @@ def run(registry: Path, out_dir: Path, cache_dir: Path | None = None, offline_di
             results.append(item)
 
     latest = {
-        "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "generated_at": now.astimezone(timezone.utc).isoformat(timespec="seconds"),
         "pipeline_version": __version__,
         "today": today.isoformat(),
         "days": [d.isoformat() for d in days],
@@ -212,6 +224,9 @@ def run(registry: Path, out_dir: Path, cache_dir: Path | None = None, offline_di
     (out_dir / "snapshot.json").write_text(json.dumps(snapshot, ensure_ascii=False), encoding="utf-8")
     (out_dir / "index.html").write_text(render_index(latest), encoding="utf-8")
     (out_dir / ".nojekyll").write_text("", encoding="utf-8")
+    if record_dir is not None:
+        meta = {"now": now.isoformat(), "today": today.isoformat(), "last_modified": http.last_modified}
+        (Path(record_dir) / RUN_META).write_text(json.dumps(meta, indent=1), encoding="utf-8")
     return latest
 
 

@@ -48,7 +48,7 @@ jobs:
             pipeline-cache-
 
       - name: Run pipeline
-        run: python -m where2ski_pipeline run --registry data/resorts.json --out out --cache cache -v
+        run: python -m where2ski_pipeline run --registry data/resorts.json --out out --cache cache --record recording -v
 
       - name: Show summary
         run: |
@@ -98,6 +98,15 @@ jobs:
           git commit -m "Store station snapshot ${day}"
           git pull --rebase origin "${GITHUB_REF_NAME}" || true
           git push origin "HEAD:${GITHUB_REF_NAME}"
+
+      - name: Keep the raw responses for offline replay
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: recording-${{ github.run_id }}
+          path: pipeline/recording
+          retention-days: 14
+          if-no-files-found: ignore
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3

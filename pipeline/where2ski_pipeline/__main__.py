@@ -5,7 +5,7 @@ from __future__ import annotations
 import argparse
 import logging
 import sys
-from datetime import date
+from datetime import date, datetime
 from pathlib import Path
 
 from .run import run
@@ -19,7 +19,10 @@ def main(argv=None) -> int:
     p.add_argument("--out", default="out")
     p.add_argument("--cache", default="cache")
     p.add_argument("--offline", default=None, help="directory with fixture responses instead of network access")
+    p.add_argument("--record", default=None,
+                   help="write every raw response into this directory; replay it later with --offline")
     p.add_argument("--today", default=None, help="override today's date (YYYY-MM-DD)")
+    p.add_argument("--now", default=None, help="override the run time (ISO 8601 with offset)")
     p.add_argument("--only", nargs="*", default=None, help="restrict to these resort ids")
     p.add_argument("-v", "--verbose", action="store_true")
     args = parser.parse_args(argv)
@@ -33,6 +36,8 @@ def main(argv=None) -> int:
         offline_dir=Path(args.offline) if args.offline else None,
         today=date.fromisoformat(args.today) if args.today else None,
         only=args.only,
+        record_dir=Path(args.record) if args.record else None,
+        now=datetime.fromisoformat(args.now) if args.now else None,
     )
     errors = [r["id"] for r in latest["resorts"] if r.get("error")]
     print(f"resorts: {len(latest['resorts'])}, errors: {len(errors)} {errors}")
