@@ -100,3 +100,13 @@ def test_north_west_wind_packs_north_west_and_loads_south_east():
     nw, se, n0 = at(run(s, "NW"), when), at(run(s, "SE"), when), at(run(series(snowfall=storm), "SE"), when)
     assert nw.kind == "wind_packed" and nw.new_cm < n0.new_cm * 0.6
     assert se.loaded and se.new_cm > n0.new_cm * 1.2
+
+
+def test_long_windy_storm_stays_bounded():
+    # 48 hours of snow in a gale: lee and windward must scale the fallen snow, not compound every hour
+    long_storm = lambda t: storm(t, start=D0 - timedelta(days=4), hours=48, cm=1.0)  # noqa: E731
+    s = series(snowfall=long_storm, gust=lambda t: 80.0, wind_from=315.0)
+    when = D0 - timedelta(hours=1)
+    se, nw = at(run(s, "SE"), when), at(run(s, "NW"), when)
+    assert se.deposited_cm <= 1.3 * 48 + 1e-6 and se.new_cm <= 1.3 * 48
+    assert 0 < nw.new_cm < se.new_cm and nw.kind == "wind_packed" and se.loaded

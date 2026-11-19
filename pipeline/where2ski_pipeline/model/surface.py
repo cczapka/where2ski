@@ -90,13 +90,22 @@ def simulate(band, top, aspect: str, lat: float, lon: float, history=None, now: 
         if past and inc[i] is not None and tw <= c.TW_SNOW_MEASURED:
             s = max(s, inc[i])
         r = rain[i] or 0.0
+        g, d = gusts[i], wdir[i]
+        windy = aspect is not None and g is not None and d is not None and g >= c.WIND_PACK_GUST and ta < 0.0
+        exposure = _angle(ASPECT_AZIMUTH[aspect], d) if windy else 90.0  # wind direction is where it comes from
 
-        # 1. snowfall
+        # 1. snowfall; in strong wind the windward side keeps half, the lee gets 30 % more
         if s >= 0.1:
             if st.new_cm < 1.0:
                 st.under = FIRM_UNDER.get(st.kind, "firm")
                 event_cm = 0.0
                 st.deposited_cm = 0.0
+                st.loaded = False
+            if exposure <= 45.0:
+                s *= 0.5
+            elif exposure >= 135.0:
+                s *= 1.3
+                st.loaded = True
             st.new_cm += s
             st.deposited_cm += s
             event_cm += s
@@ -107,7 +116,9 @@ def simulate(band, top, aspect: str, lat: float, lon: float, history=None, now: 
                 if st.new_cm >= 1.0:
                     st.kind = "moist"
             elif st.new_cm >= c.SURFACE_POWDER_MIN_CM or (st.under in ("crust", "ice") and st.new_cm >= 1.0):
-                st.kind, st.wet, st.rained, st.loaded = "powder", 0.0, False, False
+                st.kind, st.wet, st.rained = "powder", 0.0, False
+                if exposure <= 45.0:
+                    st.kind = "wind_packed"
         else:
             st.hours_since_snow += 1.0
 
@@ -155,15 +166,12 @@ def simulate(band, top, aspect: str, lat: float, lon: float, history=None, now: 
                 st.under = FIRM_UNDER[st.kind]
                 st.new_cm, st.wet, st.loaded, st.deposited_cm = 0.0, 0.0, False, 0.0
 
-        # 5. wind
-        g, d = gusts[i], wdir[i]
-        if aspect is not None and g is not None and d is not None and g >= c.WIND_PACK_GUST \
-                and st.kind == "powder" and ta < 0.0:
-            diff = _angle(ASPECT_AZIMUTH[aspect], d)  # wind direction is where the wind comes from
-            if diff <= 45.0:
+        # 5. wind over lying powder: once per event, the windward side is stripped and the lee loaded
+        if windy and st.kind == "powder" and s < 0.1:
+            if exposure <= 45.0:
                 st.new_cm *= 0.5
                 st.kind = "wind_packed"
-            elif diff >= 135.0 and not st.loaded:
+            elif exposure >= 135.0 and not st.loaded:
                 st.new_cm *= 1.3
                 st.loaded = True
 
