@@ -3,7 +3,8 @@ import json
 from datetime import datetime, timezone
 
 from tools.snapshots_to_archive import convert
-from tools.verify import derived_snow_cm, score, wet_bulb
+from tools.verify import score
+from where2ski_pipeline.model.precip import snow_cm, wet_bulb
 from where2ski_pipeline.archive import parse_rejected, read_rows, write_archive, yesterday_hs
 from where2ski_pipeline.run import run
 from .conftest import NOW, TODAY
@@ -65,6 +66,7 @@ def test_converter_and_score(tmp_path, registry_path):
 
 def test_snow_derivation():
     assert abs(wet_bulb(20.0, 50.0) - 13.7) < 0.1  # Stull's worked example
-    assert derived_snow_cm(10.0, 5.0, 90.0) == 0.0
-    cold = derived_snow_cm(10.0, -5.0, 90.0)
+    assert snow_cm(10.0, 5.0, 90.0) == (0.0, 10.0)
+    cold, rain = snow_cm(10.0, -5.0, 90.0)
+    assert rain == 0.0
     assert 12.5 < cold < 14.0  # about 1.3 cm per mm at -5 °C, against the fixed 0.7 of the weather service

@@ -42,12 +42,21 @@ def parse_hourly(block: dict) -> HourlySeries:
     return HourlySeries(times=times, values=values, elevation=block.get("elevation"))
 
 
+def query_points(resort) -> list[tuple[float, float, float]]:
+    """One point per band: the terrain centroids when config.QUERY_POINTS == "terrain", else the registry point."""
+    if config.QUERY_POINTS == "terrain":
+        return [resort.band_point(b) for b in BANDS]
+    return [(resort.lat, resort.lon, float(resort.elevation[b])) for b in BANDS]
+
+
 def fetch_resort_forecast(http: Http, resort) -> dict[str, HourlySeries]:
-    elevations = [resort.base, resort.mid, resort.top]
+    from ..model.precip import derive, snow_line
+
+    points = query_points(resort)
     params = {
-        "latitude": ",".join(f"{resort.lat:.4f}" for _ in BANDS),
-        "longitude": ",".join(f"{resort.lon:.4f}" for _ in BANDS),
-        "elevation": ",".join(f"{e:.0f}" for e in elevations),
+        "latitude": ",".join(f"{p[0]:.4f}" for p in points),
+        "longitude": ",".join(f"{p[1]:.4f}" for p in points),
+        "elevation": ",".join(f"{p[2]:.0f}" for p in points),
         "hourly": ",".join(config.HOURLY_VARS),
         "past_days": config.PAST_DAYS,
         "forecast_days": config.FORECAST_DAYS,
@@ -59,4 +68,9 @@ def fetch_resort_forecast(http: Http, resort) -> dict[str, HourlySeries]:
     if len(blocks) != len(BANDS):
         # A single block means the API collapsed the request; reuse it for every band.
         blocks = [blocks[0]] * len(BANDS)
-    return {band: parse_hourly(block) for band, block in zip(BANDS, blocks)}
+    series = {band: parse_hourly(block) for band, block in zip(BANDS, blocks)}
+    for band, (_, _, ele) in zip(BANDS, points):
+        series[band].elevation = ele  # the requested band elevation, not the grid cell's
+        derive(series[band])
+    snow_line(series)
+    return series

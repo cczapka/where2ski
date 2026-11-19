@@ -23,6 +23,7 @@ from datetime import date, datetime, timedelta
 from .. import config
 from ..geo import haversine_km
 from ..http import Http
+from ..model.precip import derive
 from .openmeteo import HourlySeries, parse_hourly
 
 log = logging.getLogger(__name__)
@@ -51,7 +52,7 @@ WAYPOINTS: list[tuple[str, float, float, float]] = [
 CORRIDOR_KM = 22.0  # how far a waypoint may lie from the straight line to count as "on the way"
 MAX_WAYPOINTS = 3
 MORNING = (5, 11)  # hours of the drive that matter
-ROUTE_VARS = ["snowfall", "rain", "temperature_2m", "freezing_level_height"]
+ROUTE_VARS = ["snowfall", "rain", "precipitation", "temperature_2m", "relative_humidity_2m", "freezing_level_height"]
 
 
 @dataclass
@@ -119,7 +120,12 @@ def fetch_road_points(http: Http, resorts) -> dict[str, RoadPoint]:
     if len(blocks) != len(items):
         log.warning("road forecast returned %d blocks for %d waypoints", len(blocks), len(items))
         return {}
-    return {w[0]: RoadPoint(name=w[0], elevation=w[3], series=parse_hourly(b)) for w, b in zip(items, blocks)}
+    out = {}
+    for w, b in zip(items, blocks):
+        series = parse_hourly(b)
+        derive(series)  # same phase and density as the resort bands
+        out[w[0]] = RoadPoint(name=w[0], elevation=w[3], series=series)
+    return out
 
 
 def road_report(points: list[RoadPoint], day: date) -> dict | None:

@@ -323,6 +323,8 @@ class DayWeather:
     low_cloud_base_pct: float | None
     freezing_level_m: float | None
     visibility_m: float | None
+    snow_line_m: float | None = None
+    snowfall_api_cm: float | None = None
 
     def public(self) -> dict:
         r = lambda v, n=1: None if v is None else round(v, n)  # noqa: E731
@@ -342,7 +344,17 @@ class DayWeather:
             "low_cloud_base_pct": r(self.low_cloud_base_pct, 0),
             "freezing_level_m": r(self.freezing_level_m, 0),
             "visibility_m": r(self.visibility_m, 0),
+            "snow_line_m": r(self.snow_line_m, 0),
+            "snowfall_api_cm": r(self.snowfall_api_cm),
         }
+
+
+def _weighted_snow_line(mid: HourlySeries, ds: datetime, de: datetime) -> float | None:
+    """Precipitation-weighted mean snow line of the day; None on a dry day."""
+    pairs = [(p, z) for p, z in zip(mid.slice("precipitation", ds, de), mid.slice("snow_line_m", ds, de))
+             if p is not None and z is not None and p >= 0.1]
+    w = sum(p for p, _ in pairs)
+    return sum(p * z for p, z in pairs) / w if w > 0 else None
 
 
 def day_weather(base: HourlySeries, mid: HourlySeries, top: HourlySeries, day: date) -> DayWeather:
@@ -365,4 +377,6 @@ def day_weather(base: HourlySeries, mid: HourlySeries, top: HourlySeries, day: d
         low_cloud_base_pct=_mean(base.slice("cloud_cover_low", core_s, core_e)),
         freezing_level_m=_mean(mid.slice("freezing_level_height", core_s, core_e)),
         visibility_m=_mean(mid.slice("visibility", core_s, core_e)),
+        snow_line_m=_weighted_snow_line(mid, ds, de),
+        snowfall_api_cm=_sum(mid.slice("snow_api", ds, de)) if "snow_api" in mid.values else None,
     )

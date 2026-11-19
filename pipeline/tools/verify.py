@@ -24,6 +24,7 @@ from pathlib import Path
 
 from where2ski_pipeline import config
 from where2ski_pipeline.archive import MIDDAY_HOUR_UTC, read_rows
+from where2ski_pipeline.model import precip
 
 MIDDAY_END_UTC = 16
 
@@ -166,27 +167,9 @@ def markdown(result: dict) -> str:
 
 # --- backtest -------------------------------------------------------------------------------------
 
-def wet_bulb(t: float, rh: float) -> float:
-    """Stull (2011) approximation, °C and % relative humidity."""
-    return (t * math.atan(0.151977 * math.sqrt(rh + 8.313659)) + math.atan(t + rh) - math.atan(rh - 1.676331)
-            + 0.00391838 * rh ** 1.5 * math.atan(0.023101 * rh) - 4.686035)
-
-
-def derived_snow_cm(precip_mm: float, t: float, rh: float | None) -> float:
-    """Snow share from wet-bulb temperature (1 at <= 0 °C, 0 at >= 1.5 °C) and Hedstrom-Pomeroy density."""
-    if not precip_mm:
-        return 0.0
-    tw = wet_bulb(t, rh) if rh is not None else t
-    share = 1.0 if tw <= 0.0 else 0.0 if tw >= 1.5 else 1.0 - tw / 1.5
-    rho = 67.9 + 51.3 * math.exp(min(t, 0.0) / 2.6)
-    if tw > 0.0:
-        rho += (200.0 - rho) * min(1.0, tw / 1.5)
-    return precip_mm * share * 100.0 / rho
-
-
 VARIANTS = {
     "api": lambda h: h["snowfall"] or 0.0,
-    "derived": lambda h: derived_snow_cm(h["precipitation"] or 0.0, h["temperature_2m"], h.get("relative_humidity_2m")),
+    "derived": lambda h: precip.snow_cm(h["precipitation"] or 0.0, h["temperature_2m"], h.get("relative_humidity_2m"))[0] or 0.0,
 }
 
 

@@ -37,6 +37,7 @@ FORECAST_DAYS = 10
 
 HOURLY_VARS = [
     "temperature_2m",
+    "relative_humidity_2m",
     "precipitation",
     "rain",
     "snowfall",
@@ -50,6 +51,14 @@ HOURLY_VARS = [
     "wind_gusts_10m",
     "weather_code",
 ]
+
+# Snowfall per band: "api" uses the weather service's value, "derived" the
+# wet-bulb phase and Hedstrom-Pomeroy density of model/precip.py. Chosen by
+# experiment 7.1 (docs/PLAN.md); both are always computed for comparison.
+SNOWFALL_SOURCE = "api"
+# Query point per band: "registry" (resort point at the registry elevations)
+# or "terrain" (centroid of that third of the runs, tools/terrain.py).
+QUERY_POINTS = "registry"
 
 STATION_MAX_KM = 10.0
 STATION_MAX_DZ = 400.0
