@@ -13,7 +13,7 @@ from . import __version__, config
 from .http import Http
 from .model import score as scoring
 from .model.snow import ASPECTS, assess_resort_day, day_weather
-from .model.surface import simulate_resort
+from .model.surface import melt_check, simulate_resort
 from .registry import Resort, load_resorts
 from .sources.bulletin import fetch_bulletins, fetch_micro_regions, find_micro_region
 from .sources.holidays import crowd_factor, fetch_holidays
@@ -112,6 +112,7 @@ def assess_resort(resort: Resort, http: Http, today: date, days: list[date], sta
                 break
 
     surface_sims = simulate_resort(mid, top, resort.lat, resort.lon, history=history, now=now_local)
+    melt = melt_check(mid, resort.lat, resort.lon, history, now_local)
     band_weights = band_shares(resort)
 
     micro = resort.micro_region or find_micro_region(micro_features.get(resort.region, []), resort.lat, resort.lon)
@@ -224,6 +225,7 @@ def assess_resort(resort: Resort, http: Http, today: date, days: list[date], sta
     ]
     result["glacier_station"] = None if glacier_station is None else {
         **glacier_station.station.public(), "distance_km": glacier_station.distance_km}
+    result["melt_check"] = melt
     result["days"] = out_days
     result["error"] = None
     return result
@@ -305,6 +307,14 @@ def run(registry: Path, out_dir: Path, cache_dir: Path | None = None, offline_di
             item.update({"stations": [], "days": [], "error": str(exc)})
             results.append(item)
 
+    checks = [r["melt_check"] for r in results if r.get("melt_check")]
+    if checks:
+        hours = sum(c["hours"] for c in checks)
+        agree = sum(c["agree"] for c in checks)
+        status["melt_check"] = {"stations": len(checks), "hours": hours, "agree": agree,
+                                "share": round(agree / hours, 3), "target": 0.8}
+        log.info("melt check: %d of %d daytime hours agree (%.0f %%)", agree, hours, 100.0 * agree / hours)
+    status["surface_model"] = config.SURFACE_MODEL
     latest = {
         "schema_version": SCHEMA_VERSION,
         "generated_at": now.astimezone(timezone.utc).isoformat(timespec="seconds"),

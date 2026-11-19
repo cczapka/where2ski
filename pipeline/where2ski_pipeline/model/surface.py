@@ -35,6 +35,7 @@ class HourState:
     q: float = 0.0              # surface energy balance, W/m²
     cold: float = 0.0           # cold content, Wh/m²: energy needed to warm the surface to 0 °C before it melts
     deposited_cm: float = 0.0   # snow fallen since the last firm surface, before settling
+    melting: bool = False       # energy left after repaying the cold content: the surface is at 0 °C
 
 
 def _angle(a: float, b: float) -> float:
@@ -132,6 +133,7 @@ def simulate(band, top, aspect: str, lat: float, lon: float, history=None, now: 
             melt_q = st.q - used
         else:
             st.cold = min(c.COLD_CONTENT_MAX_WH, st.cold - st.q)
+        st.melting = melt_q > 0.0
         if melt_q > 0.0:
             neg_hours = 0
             st.wet = min(1.0, st.wet + melt_q / c.MELT_W_PER_WET)
@@ -155,7 +157,8 @@ def simulate(band, top, aspect: str, lat: float, lon: float, history=None, now: 
 
         # 5. wind
         g, d = gusts[i], wdir[i]
-        if g is not None and d is not None and g >= c.WIND_PACK_GUST and st.kind == "powder" and ta < 0.0:
+        if aspect is not None and g is not None and d is not None and g >= c.WIND_PACK_GUST \
+                and st.kind == "powder" and ta < 0.0:
             diff = _angle(ASPECT_AZIMUTH[aspect], d)  # wind direction is where the wind comes from
             if diff <= 45.0:
                 st.new_cm *= 0.5
@@ -264,3 +267,22 @@ def assess(sims: dict, day, rose: dict, flagged: set, weights: dict) -> dict | N
                           "value_freeride": round(per[a][0], 2), "value_piste": round(per[a][1], 2),
                           "capped": a in flagged, "new_cm": round(per[a][2].new_cm, 1)} for a in ASPECTS},
     }
+
+
+def melt_check(mid, lat: float, lon: float, history, now: datetime) -> dict | None:
+    """Acceptance check of the energy balance (docs/PLAN.md 8.4): for flat ground at a station that measures the
+    snow-surface temperature, does "melting" agree with a measured surface at -0.5 °C or warmer, over past
+    daytime hours with snow on the ground?"""
+    if history is None:
+        return None
+    rad = hourly_radiation(mid, lat, lon)
+    states = simulate(mid, mid, None, lat, lon, history=history, now=now, radiation=rad)
+    hours = agree = 0
+    for st, (elev, _, _, _) in zip(states, rad):
+        h = history.hourly.get(st.time) or {}
+        tss, hs = h.get("tss"), h.get("hs")
+        if st.time >= now or elev <= 5.0 or tss is None or hs is None or hs < 10.0:
+            continue
+        hours += 1
+        agree += st.melting == (tss >= -0.5)
+    return {"station": history.station, "hours": hours, "agree": agree} if hours else None

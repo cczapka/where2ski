@@ -254,6 +254,9 @@ def surface_check(archive: Path, start: str, end: str, registry: Path, min_mid: 
     days_back = (date.today() - date.fromisoformat(start)).days + 3
     if days_back > 92:
         raise SystemExit("the weather service keeps 92 past days; choose a later start")
+    cases = {("hintertux", "2026-10-22"), ("stubaier-gletscher", "2026-10-22"), ("stubaier-gletscher", "2026-11-13"),
+             ("pitztal", "2026-11-13"), ("hintertux", "2026-11-14")}
+    named = []
     counts = {m: {"snow_days": 0, "crust_or_corn": 0, "powder": 0, "states": defaultdict(int)} for m in ("rules", "history")}
     for resort in load_resorts(registry):
         if resort.mid < min_mid:
@@ -268,6 +271,12 @@ def surface_check(archive: Path, start: str, end: str, registry: Path, min_mid: 
             derive(s_)
         snow_line({"mid": mid, "top": top})
         sims = simulate_resort(mid, top, resort.lat, resort.lon)
+        for rid, day in sorted(cases):
+            if rid == resort.id and start <= day <= end:
+                a = assess_resort_day(mid, top, date.fromisoformat(day), date.fromisoformat(day), resort.aspect_rose,
+                                      glacier=resort.glacier, surface_sims=sims, band_weights=band_shares(resort))
+                named.append({"resort": rid, "day": day, "rules": a.state_rules, "history": a.state_history,
+                              "new_on_top_cm": a.new_on_top_cm})
         d = date.fromisoformat(start)
         while d.isoformat() <= end:
             o = obs.get((resort.id, d.isoformat()))
@@ -283,7 +292,7 @@ def surface_check(archive: Path, start: str, end: str, registry: Path, min_mid: 
             d += timedelta(days=1)
     for c in counts.values():
         c["states"] = dict(sorted(c["states"].items(), key=lambda x: -x[1]))
-    return {"start": start, "end": end, "min_mid_m": min_mid, "models": counts}
+    return {"start": start, "end": end, "min_mid_m": min_mid, "models": counts, "cases": named}
 
 
 def surface_markdown(result: dict) -> str:
@@ -292,6 +301,11 @@ def surface_markdown(result: dict) -> str:
     for m, c in result["models"].items():
         lines.append(f"| {m} | {c['snow_days']} | {c['crust_or_corn']} | {c['powder']} | "
                      + ", ".join(f"{k} {v}" for k, v in c["states"].items()) + " |")
+    if result.get("cases"):
+        lines += ["", "Named cases of the review (should be powder):", "", "| resort | day | rules | history | new cm |",
+                  "|---|---|---|---|---|"]
+        lines += [f"| {c['resort']} | {c['day']} | {c['rules']} | {c['history']} | {c['new_on_top_cm']} |"
+                  for c in result["cases"]]
     return "\n".join(lines)
 
 
