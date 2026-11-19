@@ -277,12 +277,16 @@ def melt_check(mid, lat: float, lon: float, history, now: datetime) -> dict | No
         return None
     rad = hourly_radiation(mid, lat, lon)
     states = simulate(mid, mid, None, lat, lon, history=history, now=now, radiation=rad)
-    hours = agree = 0
+    hours = agree = false_melt = missed_melt = 0
     for st, (elev, _, _, _) in zip(states, rad):
         h = history.hourly.get(st.time) or {}
         tss, hs = h.get("tss"), h.get("hs")
         if st.time >= now or elev <= 5.0 or tss is None or hs is None or hs < 10.0:
             continue
         hours += 1
-        agree += st.melting == (tss >= -0.5)
-    return {"station": history.station, "hours": hours, "agree": agree} if hours else None
+        measured = tss >= -0.5
+        agree += st.melting == measured
+        false_melt += st.melting and not measured
+        missed_melt += measured and not st.melting
+    return {"station": history.station, "hours": hours, "agree": agree, "false_melt": false_melt,
+            "missed_melt": missed_melt} if hours else None

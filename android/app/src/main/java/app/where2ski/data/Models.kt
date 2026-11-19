@@ -134,6 +134,8 @@ data class AspectState(
     @SerialName("value_freeride") val valueFreeride: Double = 0.0,
     @SerialName("value_piste") val valuePiste: Double = 0.0,
     val capped: Boolean = false,
+    @SerialName("state_top") val stateTop: String? = null,
+    @SerialName("new_cm") val newCm: Double? = null,
 )
 
 @Serializable
@@ -153,6 +155,11 @@ data class SnowInfo(
     val refreeze: Boolean = false,
     @SerialName("rain_hours") val rainHours: Int = 0,
     val reasons: List<String> = emptyList(),
+    val model: String = "rules",
+    @SerialName("new_on_top_cm") val newOnTopCm: Double? = null,
+    val under: String? = null,
+    @SerialName("best_hour") val bestHour: Int? = null,
+    @SerialName("loaded_aspects") val loadedAspects: List<String>? = null,
 )
 
 @Serializable

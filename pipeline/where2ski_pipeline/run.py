@@ -312,6 +312,8 @@ def run(registry: Path, out_dir: Path, cache_dir: Path | None = None, offline_di
         hours = sum(c["hours"] for c in checks)
         agree = sum(c["agree"] for c in checks)
         status["melt_check"] = {"stations": len(checks), "hours": hours, "agree": agree,
+                                "false_melt": sum(c["false_melt"] for c in checks),
+                                "missed_melt": sum(c["missed_melt"] for c in checks),
                                 "share": round(agree / hours, 3), "target": 0.8}
         log.info("melt check: %d of %d daytime hours agree (%.0f %%)", agree, hours, 100.0 * agree / hours)
     status["surface_model"] = config.SURFACE_MODEL

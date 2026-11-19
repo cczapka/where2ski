@@ -20,11 +20,15 @@ fun stateLabel(state: String): String = when (state) {
     "fresh_powder" -> "Fresh powder"
     "wind_affected" -> "Wind-affected powder"
     "settled_powder" -> "Settled powder"
-    "corn" -> "Corn snow"
+    "corn" -> "Corn snow, softened"
     "crust" -> "Breakable crust"
     "hardpack" -> "Hardpack / old snow"
     "wet" -> "Wet / slush"
     "rain_soaked" -> "Rain-soaked"
+    "dust_on_crust" -> "Dust on crust"
+    "moist" -> "Moist new snow"
+    "rain_crust" -> "Rain crust"
+    "corn_frozen" -> "Corn, still frozen"
     else -> state
 }
 
@@ -72,4 +76,11 @@ fun ruleLabel(rule: String): String = when (rule) {
     "bare_ground" -> "sensor reads bare ground (warm, no modelled snow)"
     "excluded" -> "station excluded for this resort"
     else -> rule
+}
+
+fun underLabel(under: String?): String = when (under) {
+    "crust" -> "on a crust"
+    "ice" -> "on ice (rain crust)"
+    "firm" -> "on a firm base"
+    else -> ""
 }

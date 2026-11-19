@@ -139,6 +139,11 @@ private fun DayDetails(resort: ResortConditions, day: DayConditions, settings: U
         val bs = day.snow.byAspect[best]
         if (bs != null) KeyValue("Best aspect", "$best · ${stateLabel(bs.state)} · ${(bs.share * 100).toInt()} % of terrain")
     }
+    if (day.snow.model == "history") {
+        day.snow.newOnTopCm?.let { KeyValue("Loose snow on top", "${fmtCm(it)} ${underLabel(day.snow.under)}".trim()) }
+        day.snow.bestHour?.let { KeyValue("Best time", "around $it:00") }
+        day.snow.loadedAspects?.takeIf { it.isNotEmpty() }?.let { KeyValue("Wind-loaded aspects", it.joinToString("/")) }
+    }
     KeyValue("New snow 24 / 48 / 72 h", "${fmtCm(day.snow.hn24)} / ${fmtCm(day.snow.hn48)} / ${fmtCm(day.snow.hn72)}")
     KeyValue("Base depth", "${fmtCm(day.snow.hs)} (${hsSourceLabel(day.snow.hsSource)})")
     if (resort.glacier) {

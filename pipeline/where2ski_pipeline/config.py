@@ -120,7 +120,10 @@ DEGREE_DAY_CM = 1.0
 
 # Snow surface model (docs/PLAN.md WP4). "rules" is the old rule list in
 # snow.py, "history" the hourly simulation in surface.py; both are computed.
-SURFACE_MODEL = "rules"
+# On history 15 Oct-19 Nov the hourly model beat the rules on every check (crust
+# or corn on 56 snow days: 5 against 7; named snow days: 5 of 5 powder against 1)
+# without passing all of them (melt check 77 %, target 80 %). Switch back here.
+SURFACE_MODEL = "history"
 SURFACE_POWDER_MIN_CM = 3.0     # cold snowfall of this much makes the surface powder
 SURFACE_MAX_MEASURED_CM_H = 10.0
 TW_SNOW_MEASURED = 0.5          # measured snow-height rises count as snowfall at or below this wet-bulb

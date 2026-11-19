@@ -112,6 +112,30 @@ or higher, 647 resort-days, 48 days with 5 cm or more measured:
   Not possible: the recorded 13 November fixture, because recording started
   on 17 November; unit tests use hand-computed values instead.
 
+### WP4 status, 19 November 2026
+
+The hourly surface model is live (`SURFACE_MODEL = "history"`); the rule
+model is still computed and published as `state_rules`.
+
+| Check (docs/PLAN.md 8.4) | Target | Rules | Hourly history |
+|---|---|---|---|
+| Scenario tests | 6 of 6 | – | 6 of 6 |
+| Named snow days (22 Oct, 13 and 14 Nov) | all powder | 1 settled, 4 wind-affected | 4 fresh powder, 1 dust on crust (10 cm on a crust) |
+| Crust or corn on 56 measured snow days, 15 Oct to 19 Nov | 0 | 7 | 5 |
+| Melt check against snow-surface temperature, daytime hours | 80 % | – | 77 % (303 h, 8 stations) |
+
+Not fully passed, but better than the rules on every check, so it was
+switched on; one line in `config.py` switches back. Changes against the
+plan's design, each forced by a failing scenario: a cold-content store (a
+night's cooling must be repaid before the surface melts, otherwise shaded
+slopes melted in mild air), settling towards 35 % of the fallen depth
+instead of towards zero, and snow of 1 cm or more on a crust counts as
+"dust on crust". `status.melt_check` now splits misses into false and
+missed melt hours; that tells whether to tune the long-wave or the
+sensible-heat term next. The replay of WP3's derived snowfall alone cut the
+rule model's crust-or-corn calls from 41 of 46 snow days (live) to 7 of 56,
+so most of F3 was missing snow, not the rules.
+
 ---
 
 ## 3. Work packages at a glance
