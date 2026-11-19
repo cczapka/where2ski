@@ -7,7 +7,10 @@ downhill runs of those areas, and derives:
 - an aspect rose: share of run length facing each of 8 compass sectors,
   using the downhill bearing of every run segment (from the 3-D coordinates),
 - elevation statistics of the runs (5th/95th percentile, min, max),
-- total run length and number of runs.
+- total run length and number of runs,
+- one query point per elevation band: the run segments are split into the
+  lower, middle and upper third of run length by elevation, and each third
+  gives its length-weighted centroid and mean elevation (docs/PLAN.md 7.2).
 
 Usage (network required, meant for the terrain workflow):
     python -m tools.terrain --registry data/resorts.json --out data/terrain.json --cache cache
@@ -163,6 +166,7 @@ class Accumulator:
         self.run_km = 0.0
         self.n_runs = 0
         self.names: set[str] = set()
+        self.segments: list[tuple[float, float, float, float]] = []  # midpoint lat, lon, elevation, length m
 
     def add_run(self, coords: list, name: str | None):
         pts = [(float(c[1]), float(c[0]), float(c[2])) for c in coords if len(c) >= 3 and c[2] is not None and c[2] > -100]
@@ -177,6 +181,7 @@ class Accumulator:
                 continue
             self.run_km += d / 1000.0
             self.elevations.extend((z0, z1))
+            self.segments.append(((lat0 + lat1) / 2, (lon0 + lon1) / 2, (z0 + z1) / 2, d))
             dz = z1 - z0
             if abs(dz) < 1.0 or abs(dz) / d < 0.03:
                 continue  # flat: no meaningful aspect
@@ -202,7 +207,28 @@ class Accumulator:
             "run_km": round(self.run_km, 1),
             "n_runs": self.n_runs,
             "slope_median": round(sorted(self.slopes)[len(self.slopes) // 2], 3) if self.slopes else None,
+            "points": self.band_points(),
         }
+
+    def band_points(self) -> dict | None:
+        """Length-weighted centroid [lat, lon, elevation] of the lower, middle and upper third of the runs."""
+        if not self.segments:
+            return None
+        segs = sorted(self.segments, key=lambda x: x[2])
+        total = sum(x[3] for x in segs)
+        out, acc, i = {}, 0.0, 0
+        for band, upto in (("base", 1 / 3), ("mid", 2 / 3), ("top", 1.0)):
+            part = []
+            while i < len(segs) and (acc < upto * total or band == "top"):
+                part.append(segs[i])
+                acc += segs[i][3]
+                i += 1
+            w = sum(x[3] for x in part)
+            if w <= 0:
+                return None
+            out[band] = [round(sum(x[0] * x[3] for x in part) / w, 5), round(sum(x[1] * x[3] for x in part) / w, 5),
+                         round(sum(x[2] * x[3] for x in part) / w)]
+        return out
 
 
 def build(registry: Path, out: Path, cache: Path, max_km: float, runs_url: str, ski_areas_url: str) -> dict:

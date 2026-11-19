@@ -22,6 +22,9 @@ on:
       min_mid:
         description: "only resorts with the mid band at or above this elevation (m)"
         default: "0"
+      points:
+        description: "backtest: query points, registry and/or terrain"
+        default: "registry terrain"
 
 permissions:
   contents: read
@@ -57,4 +60,11 @@ jobs:
         if: inputs.command == 'backtest'
         run: >
           python -m tools.verify backtest --archive archive --start "${{ inputs.start }}" --end "${{ inputs.end }}"
-          --min-mid "${{ inputs.min_mid }}"
+          --min-mid "${{ inputs.min_mid }}" --points ${{ inputs.points }} --out out
+
+      - name: Keep the backtest result
+        if: inputs.command == 'backtest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: backtest-${{ github.run_id }}
+          path: pipeline/out

@@ -27,3 +27,14 @@ def test_accumulator_ignores_runs_without_elevation():
     acc = Accumulator()
     acc.add_run([[11.0, 47.0], [11.0, 47.01]], "no z")
     assert acc.result() is None
+
+
+def test_band_points_split_run_length_into_thirds():
+    acc = Accumulator()
+    # one straight run from 2400 m (north) down to 1500 m (south), equal segments
+    coords = [[11.0, 47.0 + 0.003 * i, 1500 + 100 * i] for i in range(10)]
+    acc.add_run(coords, "long")
+    pts = acc.result()["points"]
+    assert pts["base"][2] < pts["mid"][2] < pts["top"][2]
+    assert 1550 <= pts["base"][2] <= 1700 and 2250 <= pts["top"][2] <= 2350
+    assert pts["base"][0] < pts["top"][0]  # the lower third lies further south

@@ -191,40 +191,59 @@ VARIANTS = {
 
 
 def backtest(archive: Path, start: str, end: str, variants: list[str], registry: Path, min_mid: float,
-             cache: Path | None = None) -> dict:
+             cache: Path | None = None, points: list[str] = ("registry",), offline: Path | None = None) -> dict:
+    """Experiment 7.1: daily mid-band snowfall from the weather service's history, per query point
+    (registry point or terrain centroid of the middle third of the runs) and per snowfall algorithm."""
     from where2ski_pipeline.http import Http
     from where2ski_pipeline.registry import load_resorts
 
-    http = Http(cache_dir=cache)
+    http = Http(cache_dir=None if offline else cache, offline_dir=offline)
     obs = observations(read_rows(archive, "obs"))
     days_back = (date.today() - date.fromisoformat(start)).days + 1
     if days_back > 92:
         raise SystemExit("the weather service keeps 92 past days; choose a later start")
-    pairs: dict[str, list] = {v: [] for v in variants}
+    pairs: dict[str, list] = {f"{pt}/{v}": [] for pt in points for v in variants}
     for resort in load_resorts(registry):
         if resort.mid < min_mid:
             continue
-        params = {"latitude": f"{resort.lat:.4f}", "longitude": f"{resort.lon:.4f}", "elevation": f"{resort.mid:.0f}",
-                  "hourly": "temperature_2m,relative_humidity_2m,precipitation,snowfall", "past_days": days_back,
-                  "forecast_days": 1, "timezone": config.TIMEZONE, "models": "best_match"}
-        data = http.get_json(config.OPEN_METEO_URL, key=f"backtest_{resort.id}_{start}.json", params=params,
-                             ttl_s=6 * 3600)
-        hourly = data["hourly"]
-        daily: dict[str, dict[str, float]] = defaultdict(lambda: defaultdict(float))
-        for i, t in enumerate(hourly["time"]):
-            day = t[:10]
-            if not (start <= day <= end) or hourly["temperature_2m"][i] is None:
-                continue
-            h = {k: hourly[k][i] for k in hourly if k != "time"}
-            for v in variants:
-                daily[day][v] += VARIANTS[v](h)
-        for day, sums in daily.items():
-            nxt = (date.fromisoformat(day) + timedelta(days=1)).isoformat()
-            o = obs.get((resort.id, nxt))
-            if o and o["hn24"] is not None:
+        for pt in points:
+            lat, lon, ele = resort.band_point("mid") if pt == "terrain" else (resort.lat, resort.lon, resort.mid)
+            params = {"latitude": f"{lat:.4f}", "longitude": f"{lon:.4f}", "elevation": f"{ele:.0f}",
+                      "hourly": "temperature_2m,relative_humidity_2m,precipitation,snowfall", "past_days": days_back,
+                      "forecast_days": 1, "timezone": config.TIMEZONE, "models": "best_match"}
+            data = http.get_json(config.OPEN_METEO_URL, key=f"backtest_{pt}_{resort.id}_{start}.json", params=params,
+                                 ttl_s=6 * 3600)
+            hourly = data["hourly"]
+            daily: dict[str, dict[str, float]] = defaultdict(lambda: defaultdict(float))
+            for i, t in enumerate(hourly["time"]):
+                day = t[:10]
+                if not (start <= day <= end) or hourly["temperature_2m"][i] is None:
+                    continue
+                h = {k: hourly[k][i] for k in hourly if k != "time"}
                 for v in variants:
-                    pairs[v].append((sums[v], o["hn24"]))
-    return {"start": start, "end": end, "min_mid_m": min_mid, "variants": {v: skill(p) for v, p in pairs.items()}}
+                    daily[day][v] += VARIANTS[v](h)
+            for day, sums in daily.items():
+                nxt = (date.fromisoformat(day) + timedelta(days=1)).isoformat()
+                o = obs.get((resort.id, nxt))
+                if o and o["hn24"] is not None:
+                    for v in variants:
+                        pairs[f"{pt}/{v}"].append((sums[v], o["hn24"]))
+    return {"start": start, "end": end, "min_mid_m": min_mid, "variants": {k: skill(p) for k, p in pairs.items()}}
+
+
+def backtest_markdown(result: dict) -> str:
+    lines = [f"### Backtest {result['start']} to {result['end']}, mid band at or above {result['min_mid_m']:.0f} m", "",
+             "| query point / snowfall | n | bias | MAE | ≥5 cm hits/events | POD | FAR | mean fc / obs on events | ≥15 cm hits/events |",
+             "|---|---|---|---|---|---|---|---|---|"]
+    for k, s in result["variants"].items():
+        if not s.get("n"):
+            lines.append(f"| {k} | 0 | | | | | | | |")
+            continue
+        c5, c15 = s["categories"]
+        lines.append(f"| {k} | {s['n']} | {s['bias_cm']:+} | {s['mae_cm']} | {c5['hits']}/{c5['events']} | {c5['pod']} | "
+                     f"{c5['far']} | {c5['mean_forecast_on_events_cm']} / {c5['mean_observed_on_events_cm']} | "
+                     f"{c15['hits']}/{c15['events']} |")
+    return "\n".join(lines)
 
 
 def main(argv=None) -> int:
@@ -245,14 +264,18 @@ def main(argv=None) -> int:
     b.add_argument("--min-mid", type=float, default=0.0)
     b.add_argument("--registry", type=Path, default=Path("data/resorts.json"))
     b.add_argument("--cache", type=Path, default=Path("cache"))
+    b.add_argument("--points", nargs="+", default=["registry", "terrain"], choices=["registry", "terrain"])
+    b.add_argument("--offline", type=Path, help="replay recorded responses instead of fetching")
+    b.add_argument("--out", type=Path)
     args = ap.parse_args(argv)
 
     if args.cmd == "score":
         result = score(args.archive, args.since, args.until, args.min_mid, args.registry)
         text = markdown(result)
     else:
-        result = backtest(args.archive, args.start, args.end, args.variant, args.registry, args.min_mid, args.cache)
-        text = "\n".join(f"{v}: {json.dumps(s)}" for v, s in result["variants"].items())
+        result = backtest(args.archive, args.start, args.end, args.variant, args.registry, args.min_mid, args.cache,
+                          args.points, args.offline)
+        text = backtest_markdown(result)
     print(text)
     summary = os.environ.get("GITHUB_STEP_SUMMARY")
     if summary:
@@ -260,7 +283,8 @@ def main(argv=None) -> int:
             fh.write(text + "\n")
     if getattr(args, "out", None):
         args.out.mkdir(parents=True, exist_ok=True)
-        (args.out / "verification.json").write_text(json.dumps(result, indent=1), encoding="utf-8")
+        name = "verification.json" if args.cmd == "score" else "backtest.json"
+        (args.out / name).write_text(json.dumps(result, indent=1), encoding="utf-8")
     return 0
 
 

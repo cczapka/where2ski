@@ -39,6 +39,15 @@ class Resort:
     def top(self) -> float:
         return float(self.elevation["top"])
 
+    def band_point(self, band: str) -> tuple[float, float, float]:
+        """Query point of an elevation band: the terrain centroid of that third of the runs where the run
+        map is good enough, else the registry point at the registry elevation."""
+        pts = (self.terrain or {}).get("points") if (self.terrain or {}).get("rose_used") else None
+        if pts and pts.get(band):
+            lat, lon, ele = pts[band]
+            return float(lat), float(lon), float(ele)
+        return self.lat, self.lon, float(self.elevation[band])
+
     def public(self) -> dict:
         return {
             "id": self.id,
