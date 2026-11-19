@@ -69,7 +69,10 @@ def contingency(pairs: list[tuple[float, float]], thr: float) -> dict:
     false = sum(1 for f, o in pairs if f >= thr and o < thr)
     events = hits + misses
     ev = [(f, o) for f, o in pairs if o >= thr]
+    random_hits = (hits + false) * events / len(pairs) if pairs else 0.0
+    denom = hits + misses + false - random_hits
     return {
+        "ets": round((hits - random_hits) / denom, 3) if denom > 0 else None,
         "mean_forecast_on_events_cm": round(statistics.mean(f for f, _ in ev), 1) if ev else None,
         "mean_observed_on_events_cm": round(statistics.mean(o for _, o in ev), 1) if ev else None,
         "threshold_cm": thr, "events": events, "hits": hits, "misses": misses, "false_alarms": false,
@@ -145,14 +148,14 @@ def score(archive: Path, since: str | None = None, until: str | None = None, min
 
 def markdown(result: dict) -> str:
     lines = [f"### Snowfall forecast against stations ({result['filter']})", "",
-             "| lead | n | mean fc | mean obs | bias | MAE | ≥5 cm hits/events | POD | FAR | ≥15 cm hits/events | POD | FAR |",
-             "|---|---|---|---|---|---|---|---|---|---|---|---|"]
+             "| lead | n | mean fc | mean obs | bias | MAE | ≥5 cm hits/events | POD | FAR | ETS | ≥15 cm hits/events | POD | FAR |",
+             "|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
     for lead, s in result["snowfall"].items():
         if not s.get("n"):
             continue
         c5, c15 = s["categories"]
         lines.append(f"| {lead} | {s['n']} | {s['mean_forecast_cm']} | {s['mean_observed_cm']} | {s['bias_cm']:+} | "
-                     f"{s['mae_cm']} | {c5['hits']}/{c5['events']} | {c5['pod']} | {c5['far']} | "
+                     f"{s['mae_cm']} | {c5['hits']}/{c5['events']} | {c5['pod']} | {c5['far']} | {c5['ets']} | "
                      f"{c15['hits']}/{c15['events']} | {c15['pod']} | {c15['far']} |")
     if result["temperature_mid"]:
         lines += ["", "| lead | n | T bias °C | T MAE °C |", "|---|---|---|---|"]
@@ -216,15 +219,15 @@ def backtest(archive: Path, start: str, end: str, variants: list[str], registry:
 
 def backtest_markdown(result: dict) -> str:
     lines = [f"### Backtest {result['start']} to {result['end']}, mid band at or above {result['min_mid_m']:.0f} m", "",
-             "| query point / snowfall | n | bias | MAE | ≥5 cm hits/events | POD | FAR | mean fc / obs on events | ≥15 cm hits/events |",
-             "|---|---|---|---|---|---|---|---|---|"]
+             "| query point / snowfall | n | bias | MAE | ≥5 cm hits/events | POD | FAR | ETS | mean fc / obs on events | ≥15 cm hits/events |",
+             "|---|---|---|---|---|---|---|---|---|---|"]
     for k, s in result["variants"].items():
         if not s.get("n"):
-            lines.append(f"| {k} | 0 | | | | | | | |")
+            lines.append(f"| {k} | 0 | | | | | | | | |")
             continue
         c5, c15 = s["categories"]
         lines.append(f"| {k} | {s['n']} | {s['bias_cm']:+} | {s['mae_cm']} | {c5['hits']}/{c5['events']} | {c5['pod']} | "
-                     f"{c5['far']} | {c5['mean_forecast_on_events_cm']} / {c5['mean_observed_on_events_cm']} | "
+                     f"{c5['far']} | {c5['ets']} | {c5['mean_forecast_on_events_cm']} / {c5['mean_observed_on_events_cm']} | "
                      f"{c15['hits']}/{c15['events']} |")
     return "\n".join(lines)
 

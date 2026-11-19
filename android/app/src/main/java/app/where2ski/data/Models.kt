@@ -166,6 +166,7 @@ data class WeatherInfo(
     @SerialName("snowfall_cm") val snowfallCm: Double = 0.0,
     @SerialName("snowfall_base_cm") val snowfallBaseCm: Double? = null,
     @SerialName("snowfall_top_cm") val snowfallTopCm: Double? = null,
+    @SerialName("snow_line_m") val snowLineM: Double? = null,
     @SerialName("low_cloud_pct") val lowCloudPct: Double? = null,
     @SerialName("freezing_level_m") val freezingLevelM: Double? = null,
 )

@@ -10,6 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
 
+from .. import config
 from ..sources.openmeteo import HourlySeries
 
 SNOWFALL_EVENT_CM = 5.0  # a day with at least this much counts as "last snowfall"
@@ -186,8 +187,11 @@ def assess_day(mid: HourlySeries, top: HourlySeries, day: date, today: date,
         hs_source = "station"
         hs = float(station_hs)
         if day > today:
-            future = snowfall_cm(mid, datetime.combine(today, datetime.min.time()) + timedelta(hours=12), noon)
-            hs = hs + 0.7 * future  # settling
+            start = datetime.combine(today, datetime.min.time()) + timedelta(hours=12)
+            future = snowfall_cm(mid, start, noon)
+            temps = [t for t in mid.slice("temperature_2m", start, noon) if t is not None]
+            degree_days = sum(max(0.0, t) for t in temps) / 24.0
+            hs = max(0.0, hs + config.SETTLING_FACTOR * future - config.DEGREE_DAY_CM * degree_days)
             hs_source = "station+forecast"
     else:
         depth_m = _mean(mid.slice("snow_depth", day_start, day_end))

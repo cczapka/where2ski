@@ -82,6 +82,36 @@ Two limits of the evidence, so they are not forgotten:
    starting value comes from, so calibration does not mean hunting through
    code.
 
+### WP3 status, 19 November 2026
+
+Experiment 7.1, `verify.py backtest`, 15 Oct to 17 Nov, mid band at 1700 m
+or higher, 647 resort-days, 48 days with 5 cm or more measured:
+
+| Query point / snowfall | Hits | Detection | False-alarm ratio | ETS | Mean forecast / measured on snow days |
+|---|---|---|---|---|---|
+| A registry / service | 14 | 0.29 | 0.46 | 0.21 | 3.8 / 9.0 cm |
+| B registry / derived | 26 | 0.54 | 0.61 | 0.25 | 6.0 / 9.0 cm |
+| C terrain / service | 13 | 0.27 | 0.32 | 0.22 | 3.4 / 9.0 cm |
+| D terrain / derived | 22 | 0.46 | 0.60 | 0.23 | 5.4 / 9.0 cm |
+
+- The derivation is what helps. The terrain query points do not, so the
+  pipeline runs B: `SNOWFALL_SOURCE = "derived"`, `QUERY_POINTS = "registry"`.
+  The terrain points stay in `terrain.json` for later use.
+- Even A finds 14 snow days on this history, against 5 in the live day-0
+  archive. The forecast taken at run time misses more than the same model a
+  day later, so lead time matters as much as the algorithm. The archive now
+  measures lead days 1 to 9 from 17 November on.
+- Targets of 7.5 not yet met: detection 54 % (target 60 %), false alarms 61 %
+  (target 40 %), forecast on snow days 33 % low (target within 30 %). With
+  only 48 snow days from three or four storms, the thresholds are not tuned
+  to this sample. Next candidates: the false alarms, by comparing with
+  stations that measure precipitation, and the ensemble range of WP7.
+- Done from 7.4: derived snowfall for road passes, snow line per hour and
+  day, stations matched within 250 m of the band (3 of 26 resorts lose their
+  depth station), melt of 1 cm per positive degree-day in the projected base.
+  Not possible: the recorded 13 November fixture, because recording started
+  on 17 November; unit tests use hand-computed values instead.
+
 ---
 
 ## 3. Work packages at a glance

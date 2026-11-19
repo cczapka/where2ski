@@ -29,7 +29,8 @@ def test_end_to_end_offline(registry_path, offline_dir, tmp_path):
     assert k["terrain"]["run_km"] == 40.5
     assert today["avalanche"]["level_top"] == 3 and today["avalanche"]["level_mid"] == 3
     assert today["scores"]["freeride"] > 60
-    assert today["roads"]["snowfall_cm"] == 9.0  # 6 morning hours at 1.5 cm/h on the worst pass
+    # 6 morning hours of 2.14 mm at -2 °C: 2.34 cm/h with the Hedstrom-Pomeroy density (the service said 1.5 cm/h)
+    assert today["roads"]["snowfall_cm"] == 14.0
     assert today["factors"]["roads"] < 0.6
     assert today["blockers"] == {"freeride": [], "piste": []}
     # beyond the bulletin: today's level carried forward, with lower confidence and a note

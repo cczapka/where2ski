@@ -21,7 +21,7 @@ def make_series(today: date = TODAY, past_days: int = 10, forecast_days: int = 1
     times = [start + timedelta(hours=i) for i in range(n)]
     values = {
         "temperature_2m": [temp(t) for t in times],
-        "precipitation": [snowfall(t) / 7.0 + rain(t) for t in times],
+        "precipitation": [snowfall(t) / 0.7 + rain(t) for t in times],  # the service converts 1 mm to 0.7 cm
         "rain": [rain(t) for t in times],
         "snowfall": [snowfall(t) for t in times],
         "snow_depth": [snow_depth(t) for t in times],

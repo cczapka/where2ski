@@ -55,13 +55,16 @@ HOURLY_VARS = [
 # Snowfall per band: "api" uses the weather service's value, "derived" the
 # wet-bulb phase and Hedstrom-Pomeroy density of model/precip.py. Chosen by
 # experiment 7.1 (docs/PLAN.md); both are always computed for comparison.
-SNOWFALL_SOURCE = "api"
+# Backtest 15 Oct-17 Nov 2026, mid band >= 1700 m, 48 snow days: the service's
+# value found 14, derived 26 (ETS 0.21 -> 0.25), at a false-alarm ratio of 0.61.
+SNOWFALL_SOURCE = "derived"
 # Query point per band: "registry" (resort point at the registry elevations)
 # or "terrain" (centroid of that third of the runs, tools/terrain.py).
+# Terrain points did not help in the same backtest (13 and 22 hits), so registry.
 QUERY_POINTS = "registry"
 
 STATION_MAX_KM = 10.0
-STATION_MAX_DZ = 400.0
+STATION_MAX_DZ = 250.0  # per band (docs/PLAN.md 7.4); 400 m kept 3 more resorts but less representative stations
 STATION_MAX_COUNT = 3
 # Readings older than this are not used. Normal age is 0.3-1 h for every
 # operator (snapshots Sep-Nov 2026); runs are 3 h apart.
@@ -106,6 +109,11 @@ WEIGHTS = {
         "roads": 5,
     },
 }
+
+# Projected base depth: settled new snow minus melt. 1 cm per positive degree-day
+# at the band is a starting value, to be calibrated against the stations.
+SETTLING_FACTOR = 0.7
+DEGREE_DAY_CM = 1.0
 
 # Base depth thresholds in cm.
 BASE_MIN_PISTE = 30

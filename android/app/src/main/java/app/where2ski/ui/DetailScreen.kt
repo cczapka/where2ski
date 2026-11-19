@@ -33,6 +33,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import app.where2ski.data.DayConditions
+import kotlin.math.roundToInt
 import app.where2ski.data.Latest
 import app.where2ski.data.Mode
 import app.where2ski.data.ResortConditions
@@ -170,7 +171,12 @@ private fun DayDetails(resort: ResortConditions, day: DayConditions, settings: U
     KeyValue("Temperature min / max", "${fmtTemp(day.weather.tMinMid)} / ${fmtTemp(day.weather.tMaxMid)}")
     KeyValue("Daytime mean", fmtTemp(day.weather.tMeanDayMid))
     KeyValue("Gusts at top", day.weather.gustMaxTop?.let { "${it.toInt()} km/h" } ?: "–")
-    KeyValue("Precipitation / snowfall", "%.1f mm / %.0f cm".format(day.weather.precipMm, day.weather.snowfallCm))
+    KeyValue("Precipitation", "%.1f mm".format(day.weather.precipMm))
+    KeyValue(
+        "New snow base / mid / top",
+        listOf(day.weather.snowfallBaseCm, day.weather.snowfallCm, day.weather.snowfallTopCm).joinToString(" / ") { fmtCm(it) },
+    )
+    day.weather.snowLineM?.let { KeyValue("Snow line", "above ${(it / 100).roundToInt() * 100} m") }
     KeyValue("Low cloud", day.weather.lowCloudPct?.let { "${it.toInt()} %" } ?: "–")
     KeyValue("Freezing level", day.weather.freezingLevelM?.let { "${it.toInt()} m" } ?: "–")
 
