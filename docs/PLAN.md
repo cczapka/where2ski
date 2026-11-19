@@ -19,7 +19,7 @@ switching the default branch to `main`, which waits for the owner.
 |---|---|---|
 | WP0 record and replay | done | `run --record DIR`, replay with `--offline DIR`; failed requests are replayed too. CI keeps each run's recording for 14 days |
 | WP0 development hosts | done | `avalanche.report` added, since the bulletin files redirect there. The weather service's daily limit is shared by the sandbox's exit address, so local live runs can hit 429; CI recordings replace them |
-| WP0 `main` as default | open | Needs the owner's go-ahead to push `main`; deploy and archive steps already run only on the default branch |
+| WP0 `main` as default | pushed 19 Nov | The owner switches the default branch in the repository settings and allows `main` to deploy to the github-pages environment |
 | WP1 stale stations | done | Normal reading age is 0.3 to 1 h for every operator; the 6 to 10 Nov freeze would now be flagged |
 | WP1 quality control | done | Obergurgl spike rejected (`limit_24h`); GeoSphere's duplicate station records merged |
 | WP1 glacier rule | done | No glacier has a depth station within 250 m of its top band yet, so off-piste on glaciers is blocked with "not measured" until WP3 moves the band |
@@ -833,6 +833,14 @@ this plan.
 | Freeride on glaciers | 120 cm measured near the top band, as a starting value. No blanket block before the bulletin season. No measurement means blocked | WP1 |
 | Default branch | Create `main` from the current branch and make it the default | Branch pushed on the owner's go-ahead; the default is switched by the owner in the repository settings |
 | Feedback leaving the phone | Export by hand into a private repository. Automatic sync deferred | WP8; the owner creates the private repository |
+
+Decided by the owner on 19 November 2026:
+
+| Topic | Decision |
+|---|---|
+| Feedback after a ski day (WP8, 12.3 to 12.5) | Dropped. The owner gives feedback in the development sessions, which tune the parameters directly. Past days in the app (12.1, 12.2) stay in the plan |
+| Repository visibility | The owner may make the repository private. On a free GitHub plan that switches off GitHub Pages, which serves the app's data, and limits Actions minutes; to be checked before switching |
+| Next packages | WP3, then WP4, WP6, WP5, WP7 |
 
 ### Still to confirm during implementation
 
