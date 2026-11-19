@@ -324,22 +324,6 @@ def run(registry: Path, out_dir: Path, cache_dir: Path | None = None, offline_di
 
 
 def render_index(latest: dict) -> str:
-    """Tiny status page for a browser check of the published data."""
-    days = latest["days"]
-    rows = []
-    for r in sorted(latest["resorts"], key=lambda x: -(x["days"][0]["scores"]["freeride"] if x.get("days") else -1)):
-        cells = []
-        for d in r.get("days", []):
-            f, p = d["scores"]["freeride"], d["scores"]["piste"]
-            title = f"{d['snow']['state']} hn24 {d['snow']['hn24']} hs {d['snow']['hs']} sun {d['weather']['sun_hours']}h"
-            cells.append(f'<td title="{title}" style="background:hsl({int(f*1.2)},70%,80%)">{f:.0f}<br><small>{p:.0f}</small></td>')
-        err = f' <small style="color:#a00">{r["error"]}</small>' if r.get("error") else ""
-        rows.append(f"<tr><th style='text-align:left'>{r['name']}{err}</th>{''.join(cells)}</tr>")
-    head = "".join(f"<th>{d[5:]}</th>" for d in days)
-    return f"""<!doctype html><meta charset="utf-8"><title>where2ski data</title>
-<style>body{{font-family:system-ui;margin:16px}}td{{text-align:center;padding:4px 6px;border:1px solid #ddd}}</style>
-<h1>where2ski – latest pipeline output</h1>
-<p>generated {latest['generated_at']} · <a href="latest.json">latest.json</a> · <a href="resorts.json">resorts.json</a></p>
-<p>cells: freeride score / piste score (0–100), hover for details</p>
-<table><tr><th></th>{head}</tr>{''.join(rows)}</table>
-<p><small>{' · '.join(latest['attribution'])}</small></p>"""
+    """Deliberately empty and not indexed: the data is for the app, not for visitors or search engines."""
+    return """<!doctype html><meta charset="utf-8"><meta name="robots" content="noindex, nofollow, noarchive">
+<title>.</title>"""

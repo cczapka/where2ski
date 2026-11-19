@@ -1,93 +1,13 @@
 # where2ski
 
-[![pipeline](https://github.com/cczapka/where2ski/actions/workflows/pipeline.yml/badge.svg)](https://github.com/cczapka/where2ski/actions/workflows/pipeline.yml)
-[![android](https://github.com/cczapka/where2ski/actions/workflows/android.yml/badge.svg)](https://github.com/cczapka/where2ski/actions/workflows/android.yml)
-
-An Android app that suggests **where and when** to go skiing from Munich:
-Bavarian Alps, Tyrol (Snow Card Tirol) and the Salzburg area, with a focus on
-free skiing but useful for piste days too.
-
-It combines weather forecasts, station observations of snow height and
-temperature, avalanche bulletins and per-resort terrain data (elevation
-bands, aspects) into a snow-quality model and a ranked, explainable score per
-resort and day.
-
-## Status
-
-The pipeline and the app are running. The design, data sources and scoring are
-documented in [docs/CONCEPT.md](docs/CONCEPT.md). A review against station
-measurements in November 2026 found the snowfall forecast and the snow-surface
-labels unreliable; the fixes are specified in [docs/PLAN.md](docs/PLAN.md).
-
-The earlier Python command-line prototype (Bergfex forecast ranking by sun
-hours) lives in [where2ski_py](https://github.com/cczapka/where2ski_py).
-
-## Structure
-
-```
-pipeline/   Python data pipeline: fetch open data, snow model, scoring, JSON output
-android/    Android app (Kotlin, Jetpack Compose) that reads the published JSON
-docs/       Concept and design notes
-.github/    Workflows: pipeline (cron, publishes to GitHub Pages) and android (APK build)
-```
-
-## Pipeline
+Personal project, not maintained for outside use.
 
 ```sh
-cd pipeline
-python3 -m venv .venv && . .venv/bin/activate
-pip install -r requirements-dev.txt
-python -m pytest              # unit tests, no network needed
-python -m where2ski_pipeline run --out out -v   # live run, writes out/latest.json
+cd pipeline && python3 -m venv .venv && . .venv/bin/activate
+pip install -r requirements-dev.txt && python -m pytest
 ```
 
-`latest.json` holds, per resort and day, the factor values, both scores,
-blockers, badges, the snow assessment (overall and per aspect sector), weather
-summary and avalanche info.
+The app lives in `android/` (`./gradlew :app:assembleDebug`).
 
-Terrain data (aspect roses, run lengths, elevation percentiles per resort) is
-derived from OpenSkiData with `python -m tools.terrain` and stored in
-`pipeline/data/terrain.json`; the `terrain` workflow rebuilds it on demand.
-`resorts.json` is the static registry (`pipeline/data/resorts.json`).
-The GitHub Actions workflow runs the pipeline every three hours in season and
-publishes the output to GitHub Pages at
-`https://cczapka.github.io/where2ski/` (`latest.json`, `resorts.json`, and a
-small status page). Once a day it also commits a station snapshot to
-`pipeline/data/snapshots/` as history for the snow model.
-
-## Android app
-
-Kotlin with Jetpack Compose. It downloads `latest.json`, caches it, and lets
-you switch between Freeride and Piste mode, adjust factor weights with sliders,
-filter by pass and travel time, and browse a ranking, a day-by-resort matrix, a
-map and a detail page per resort with the aspect rose and the reasoning.
-
-After a ski day you can rate it with stars and condition chips; the factor
-values of that day are stored with the rating, and the settings screen uses
-them to suggest weights that match what you actually enjoyed. A background job
-refreshes every six hours, notifies about powder days, and feeds a home-screen
-widget with the best three resorts for the coming weekend.
-
-The `android` workflow builds a debug APK on every push and attaches it to the
-workflow run.
-
-Open `android/` in Android Studio, or build with `./gradlew :app:assembleDebug`.
-
-To try it without a build, install the latest APK from
-[Releases](https://github.com/cczapka/where2ski/releases): tap the `.apk` on the
-phone, allow installing unknown apps once, and install. Android 8.0 or newer.
-Play Protect warns that the developer is unknown because the build is
-debug-signed; the signing key is stable, so a newer build installs over an older
-one without uninstalling first.
-
-Releases are produced by the `release` workflow, either on demand or by pushing
-a `v*` tag. Every push also attaches an APK to the `android` workflow run, but
-that one comes as a zip and needs a GitHub login.
-
-## Data sources and attribution
-
-Weather data by [Open-Meteo.com](https://open-meteo.com) (CC BY 4.0). Station
-data from the EAWS partner services via lawinen.report. Avalanche bulletins
-from avalanche.report (EUREGIO) and EAWS. Warning regions from
-[eaws-regions](https://regions.avalanches.org). Holidays from the
-[OpenHolidays API](https://www.openholidaysapi.org).
+Data: Open-Meteo.com (CC BY 4.0), EAWS partner services, OpenHolidays API,
+OpenSkiData.
