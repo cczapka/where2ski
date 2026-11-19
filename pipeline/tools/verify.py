@@ -129,8 +129,8 @@ def score(archive: Path, since: str | None = None, until: str | None = None, min
             same = obs.get((r["resort"], target))
             if same and same["hn24"] is not None and same["hn24"] >= 5:
                 plaus["lead0_days_with_5cm"] += 1
-                plaus["corn_or_crust_after_5cm"] += r["state_mid"] in ("corn", "crust")
-            if r["state_mid"] in ("fresh_powder", "settled_powder"):
+                plaus["corn_or_crust_after_5cm"] += r["state_mid"] in CRUSTY
+            if r["state_mid"] in ("fresh_powder", "settled_powder", "dust_on_crust"):
                 plaus["lead0_powder_days"] += 1
                 plaus["powder_on_melting_surface"] += bool(same and any(t >= -0.5 for t in same["t_surface"]))
     result = {
@@ -232,6 +232,69 @@ def backtest_markdown(result: dict) -> str:
     return "\n".join(lines)
 
 
+CRUSTY = {"corn", "corn_frozen", "crust", "rain_crust"}
+POWDERY = {"fresh_powder", "settled_powder", "wind_affected", "dust_on_crust"}
+
+
+def surface_check(archive: Path, start: str, end: str, registry: Path, min_mid: float, cache: Path | None = None,
+                  offline: Path | None = None) -> dict:
+    """WP4 acceptance on history: replay the weather service's hourly history through the rule model and the
+    hourly surface model, and count on days with 5 cm or more measured that morning how often each calls the
+    surface crust or corn (should be never) and powder (should be most)."""
+    from where2ski_pipeline.http import Http
+    from where2ski_pipeline.model.precip import derive, snow_line
+    from where2ski_pipeline.model.snow import assess_resort_day
+    from where2ski_pipeline.model.surface import simulate_resort
+    from where2ski_pipeline.registry import load_resorts
+    from where2ski_pipeline.run import band_shares
+    from where2ski_pipeline.sources.openmeteo import parse_hourly
+
+    http = Http(cache_dir=None if offline else cache, offline_dir=offline)
+    obs = observations(read_rows(archive, "obs"))
+    days_back = (date.today() - date.fromisoformat(start)).days + 3
+    if days_back > 92:
+        raise SystemExit("the weather service keeps 92 past days; choose a later start")
+    counts = {m: {"snow_days": 0, "crust_or_corn": 0, "powder": 0, "states": defaultdict(int)} for m in ("rules", "history")}
+    for resort in load_resorts(registry):
+        if resort.mid < min_mid:
+            continue
+        params = {"latitude": f"{resort.lat:.4f},{resort.lat:.4f}", "longitude": f"{resort.lon:.4f},{resort.lon:.4f}",
+                  "elevation": f"{resort.mid:.0f},{resort.top:.0f}", "hourly": ",".join(config.HOURLY_VARS),
+                  "past_days": days_back, "forecast_days": 1, "timezone": config.TIMEZONE, "models": "best_match"}
+        data = http.get_json(config.OPEN_METEO_URL, key=f"surface_{resort.id}_{start}.json", params=params, ttl_s=6 * 3600)
+        mid, top = parse_hourly(data[0]), parse_hourly(data[1])
+        mid.elevation, top.elevation = resort.mid, resort.top
+        for s_ in (mid, top):
+            derive(s_)
+        snow_line({"mid": mid, "top": top})
+        sims = simulate_resort(mid, top, resort.lat, resort.lon)
+        d = date.fromisoformat(start)
+        while d.isoformat() <= end:
+            o = obs.get((resort.id, d.isoformat()))
+            if o and o["hn24"] is not None and o["hn24"] >= 5.0:
+                a = assess_resort_day(mid, top, d, d, resort.aspect_rose, glacier=resort.glacier, surface_sims=sims,
+                                      band_weights=band_shares(resort))
+                for m, state in (("rules", a.state_rules), ("history", a.state_history)):
+                    c = counts[m]
+                    c["snow_days"] += 1
+                    c["crust_or_corn"] += state in CRUSTY
+                    c["powder"] += state in POWDERY
+                    c["states"][state] += 1
+            d += timedelta(days=1)
+    for c in counts.values():
+        c["states"] = dict(sorted(c["states"].items(), key=lambda x: -x[1]))
+    return {"start": start, "end": end, "min_mid_m": min_mid, "models": counts}
+
+
+def surface_markdown(result: dict) -> str:
+    lines = [f"### Surface on snow days (≥5 cm measured that morning), {result['start']} to {result['end']}", "",
+             "| model | snow days | crust or corn | powder | states |", "|---|---|---|---|---|"]
+    for m, c in result["models"].items():
+        lines.append(f"| {m} | {c['snow_days']} | {c['crust_or_corn']} | {c['powder']} | "
+                     + ", ".join(f"{k} {v}" for k, v in c["states"].items()) + " |")
+    return "\n".join(lines)
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(prog="verify")
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -253,11 +316,23 @@ def main(argv=None) -> int:
     b.add_argument("--points", nargs="+", default=["registry", "terrain"], choices=["registry", "terrain"])
     b.add_argument("--offline", type=Path, help="replay recorded responses instead of fetching")
     b.add_argument("--out", type=Path)
+    sf = sub.add_parser("surface")
+    sf.add_argument("--archive", type=Path, required=True)
+    sf.add_argument("--start", required=True)
+    sf.add_argument("--end", required=True)
+    sf.add_argument("--min-mid", type=float, default=0.0)
+    sf.add_argument("--registry", type=Path, default=Path("data/resorts.json"))
+    sf.add_argument("--cache", type=Path, default=Path("cache"))
+    sf.add_argument("--offline", type=Path)
+    sf.add_argument("--out", type=Path)
     args = ap.parse_args(argv)
 
     if args.cmd == "score":
         result = score(args.archive, args.since, args.until, args.min_mid, args.registry)
         text = markdown(result)
+    elif args.cmd == "surface":
+        result = surface_check(args.archive, args.start, args.end, args.registry, args.min_mid, args.cache, args.offline)
+        text = surface_markdown(result)
     else:
         result = backtest(args.archive, args.start, args.end, args.variant, args.registry, args.min_mid, args.cache,
                           args.points, args.offline)
@@ -269,7 +344,7 @@ def main(argv=None) -> int:
             fh.write(text + "\n")
     if getattr(args, "out", None):
         args.out.mkdir(parents=True, exist_ok=True)
-        name = "verification.json" if args.cmd == "score" else "backtest.json"
+        name = {"score": "verification.json", "backtest": "backtest.json"}.get(args.cmd, f"{args.cmd}.json")
         (args.out / name).write_text(json.dumps(result, indent=1), encoding="utf-8")
     return 0
 

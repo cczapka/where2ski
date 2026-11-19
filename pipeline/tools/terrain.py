@@ -189,7 +189,17 @@ class Accumulator:
             self.sector_len[sector(b)] += d
             self.slopes.append(abs(dz) / d)
 
-    def result(self) -> dict | None:
+    def band_share(self, bands: dict | None) -> dict | None:
+        """Share of run length closest to each registry band elevation."""
+        if not bands or not self.segments:
+            return None
+        acc = {b: 0.0 for b in bands}
+        for _, _, z, d in self.segments:
+            acc[min(bands, key=lambda b: abs(float(bands[b]) - z))] += d
+        total = sum(acc.values())
+        return {b: round(v / total, 3) for b, v in acc.items()} if total > 0 else None
+
+    def result(self, bands: dict | None = None) -> dict | None:
         total = sum(self.sector_len.values())
         if self.n_runs == 0 or total <= 0:
             return None
@@ -208,6 +218,7 @@ class Accumulator:
             "n_runs": self.n_runs,
             "slope_median": round(sorted(self.slopes)[len(self.slopes) // 2], 3) if self.slopes else None,
             "points": self.band_points(),
+            "band_share": self.band_share(bands),
         }
 
     def band_points(self) -> dict | None:
@@ -289,7 +300,7 @@ def build(registry: Path, out: Path, cache: Path, max_km: float, runs_url: str, 
         "resorts": {},
     }
     for r in resorts:
-        res = acc[r.id].result()
+        res = acc[r.id].result(bands=r.elevation)
         if res is None:
             log.warning("%s: no downhill runs found", r.id)
             continue

@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
     inputs:
       command:
-        description: "score or backtest"
+        description: "score, backtest or surface"
         default: score
       start:
         description: "backtest: first target day (YYYY-MM-DD, at most 92 days back)"
@@ -62,9 +62,15 @@ jobs:
           python -m tools.verify backtest --archive archive --start "${{ inputs.start }}" --end "${{ inputs.end }}"
           --min-mid "${{ inputs.min_mid }}" --points ${{ inputs.points }} --out out
 
-      - name: Keep the backtest result
-        if: inputs.command == 'backtest'
+      - name: Surface check
+        if: inputs.command == 'surface'
+        run: >
+          python -m tools.verify surface --archive archive --start "${{ inputs.start }}" --end "${{ inputs.end }}"
+          --min-mid "${{ inputs.min_mid }}" --out out
+
+      - name: Keep the result
+        if: inputs.command == 'backtest' || inputs.command == 'surface'
         uses: actions/upload-artifact@v4
         with:
-          name: backtest-${{ github.run_id }}
+          name: ${{ inputs.command }}-${{ github.run_id }}
           path: pipeline/out

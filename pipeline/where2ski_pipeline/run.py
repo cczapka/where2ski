@@ -13,6 +13,7 @@ from . import __version__, config
 from .http import Http
 from .model import score as scoring
 from .model.snow import ASPECTS, assess_resort_day, day_weather
+from .model.surface import simulate_resort
 from .registry import Resort, load_resorts
 from .sources.bulletin import fetch_bulletins, fetch_micro_regions, find_micro_region
 from .sources.holidays import crowd_factor, fetch_holidays
@@ -61,6 +62,13 @@ def is_limited(resort: Resort, day: date) -> bool:
     return until is not None and is_open(resort, day) and day <= until
 
 
+def band_shares(resort: Resort) -> dict:
+    """Weights of the mid and top band in the surface value: their share of run length (tools/terrain.py)."""
+    share = (resort.terrain or {}).get("band_share") or {}
+    m, t = float(share.get("mid") or 0.0), float(share.get("top") or 0.0)
+    return {"mid": m / (m + t), "top": t / (m + t)} if m + t > 0 else {"mid": 0.5, "top": 0.5}
+
+
 def glacier_depth_station(resort: Resort, stations) -> object | None:
     """A snow-depth station near the top band, for the off-piste rule on glaciers."""
     mapped = map_stations(resort, stations, max_dz=config.GLACIER_STATION_MAX_DZ, max_count=5,
@@ -102,6 +110,9 @@ def assess_resort(resort: Resort, http: Http, today: date, days: list[date], sta
             history = fetch_history(http, m.station)
             if history is not None:
                 break
+
+    surface_sims = simulate_resort(mid, top, resort.lat, resort.lon, history=history, now=now_local)
+    band_weights = band_shares(resort)
 
     micro = resort.micro_region or find_micro_region(micro_features.get(resort.region, []), resort.lat, resort.lon)
     if micro is None and mapped:
@@ -157,7 +168,7 @@ def assess_resort(resort: Resort, http: Http, today: date, days: list[date], sta
                 reason = "out_of_season"
         snow = assess_resort_day(mid, top, day, today, resort.aspect_rose, station_hs=station_hs,
                                  station_hn=station_hn, glacier=resort.glacier, history=history,
-                                 flagged_aspects=flagged)
+                                 flagged_aspects=flagged, surface_sims=surface_sims, band_weights=band_weights)
         if resort.glacier and snow.hs is not None and snow.hs < config.BASE_MIN_PISTE:
             snow.value_piste = round(snow.value_piste * config.GLACIER_THIN_PISTE_FACTOR, 3)
             snow.reasons.append("thin cover over glacier ice")

@@ -50,6 +50,9 @@ HOURLY_VARS = [
     "wind_speed_10m",
     "wind_gusts_10m",
     "weather_code",
+    "direct_normal_irradiance",
+    "diffuse_radiation",
+    "wind_direction_10m",
 ]
 
 # Snowfall per band: "api" uses the weather service's value, "derived" the
@@ -114,6 +117,27 @@ WEIGHTS = {
 # at the band is a starting value, to be calibrated against the stations.
 SETTLING_FACTOR = 0.7
 DEGREE_DAY_CM = 1.0
+
+# Snow surface model (docs/PLAN.md WP4). "rules" is the old rule list in
+# snow.py, "history" the hourly simulation in surface.py; both are computed.
+SURFACE_MODEL = "rules"
+SURFACE_POWDER_MIN_CM = 3.0     # cold snowfall of this much makes the surface powder
+SURFACE_MAX_MEASURED_CM_H = 10.0
+TW_SNOW_MEASURED = 0.5          # measured snow-height rises count as snowfall at or below this wet-bulb
+ALBEDO_NEW = 0.85
+ALBEDO_OLD = 0.6
+ALBEDO_DECAY_H = 72.0
+LW_CLEAR = 60.0                 # W/m² net long-wave loss under clear sky ...
+LW_CLOUDY = 12.0                # ... and under full cloud
+SENSIBLE_W_PER_C = 15.0         # W/m² per °C of air temperature
+MELT_W_PER_WET = 1000.0         # W/m² for one hour to wet the surface fully
+CORN_CYCLES = 3
+WIND_PACK_GUST = 45.0           # km/h
+SETTLE_TAU_COLD_H = 72.0        # new snow settles with this time constant at -5 °C or colder
+SETTLE_TAU_WARM_H = 36.0        # ... and this one near 0 °C
+SETTLE_FLOOR = 0.35             # ... towards this share of the fallen depth (density about 3x new snow)
+COLD_CONTENT_MAX_WH = 200.0     # Wh/m² a night can store; the sun must repay it before the surface melts
+SURFACE_HOURS = (10, 12, 14)    # the day's value is the best of these hours
 
 # Base depth thresholds in cm.
 BASE_MIN_PISTE = 30

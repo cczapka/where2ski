@@ -132,6 +132,13 @@ class SnowAssessment:
     aspect: str | None = None
     best_aspect: str | None = None
     by_aspect: dict | None = None
+    model: str = "rules"
+    state_rules: str | None = None
+    state_history: str | None = None
+    new_on_top_cm: float | None = None
+    under: str | None = None
+    best_hour: int | None = None
+    loaded_aspects: list | None = None
 
     def public(self) -> dict:
         return {
@@ -154,6 +161,13 @@ class SnowAssessment:
             "rain_hours": self.rain_hours,
             "gust_max": None if self.gust_max is None else round(self.gust_max),
             "reasons": self.reasons,
+            "model": self.model,
+            "state_rules": self.state_rules,
+            "state_history": self.state_history,
+            "new_on_top_cm": self.new_on_top_cm,
+            "under": self.under,
+            "best_hour": self.best_hour,
+            "loaded_aspects": self.loaded_aspects,
         }
 
 
@@ -260,7 +274,8 @@ def assess_day(mid: HourlySeries, top: HourlySeries, day: date, today: date,
 
 def assess_resort_day(mid: HourlySeries, top: HourlySeries, day: date, today: date, rose: dict | None,
                       station_hs: float | None = None, station_hn: dict | None = None, glacier: bool = False,
-                      history=None, flagged_aspects: set[str] | None = None) -> SnowAssessment:
+                      history=None, flagged_aspects: set[str] | None = None, surface_sims: dict | None = None,
+                      band_weights: dict | None = None) -> SnowAssessment:
     """Assess every aspect sector, then aggregate with the resort's aspect rose.
 
     Freeride quality is 70 % rose-weighted mean plus 30 % of the best sector
@@ -307,6 +322,25 @@ def assess_resort_day(mid: HourlySeries, top: HourlySeries, day: date, today: da
     if history is not None:
         reasons.append(f"melt/refreeze from station {history.station} measurements")
     rep.reasons = reasons
+    rep.state_rules = rep.state
+    if surface_sims is not None:
+        from .surface import assess as assess_surface
+        hist = assess_surface(surface_sims, day, rose_n, flagged, band_weights or {"mid": 0.5, "top": 0.5})
+        if hist is not None:
+            rep.state_history = hist["state"]
+            rep.new_on_top_cm, rep.under = hist["new_on_top_cm"], hist["under"]
+            rep.best_hour, rep.loaded_aspects = hist["best_hour"], hist["loaded_aspects"]
+            if config.SURFACE_MODEL == "history":
+                rep.model = "history"
+                rep.state, rep.aspect, rep.best_aspect = hist["state"], hist["aspect"], hist["best_aspect"]
+                rep.value_freeride, rep.value_piste = hist["value_freeride"], hist["value_piste"]
+                rep.by_aspect = hist["by_aspect"]
+                rep.reasons = [r for r in reasons if not r.startswith(("best aspect", "avalanche problem"))] + [
+                    f"hourly surface history: {hist['state'].replace('_', ' ')} on {hist['aspect']}-facing terrain, "
+                    f"best around {hist['best_hour']}:00",
+                    f"best aspect {hist['best_aspect']}: {hist['by_aspect'][hist['best_aspect']]['state'].replace('_', ' ')}",
+                ] + ([f"wind-loaded: {'/'.join(hist['loaded_aspects'])}"] if hist["loaded_aspects"] else []) + (
+                    [r for r in reasons if r.startswith("avalanche problem")])
     return rep
 
 
